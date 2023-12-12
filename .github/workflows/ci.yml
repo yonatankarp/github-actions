@@ -1,0 +1,80 @@
+name: ci
+on:
+  workflow_call:
+    inputs:
+      app_name:
+        type: string
+        required: false
+        description: the application name
+        default: ${{ github.event.repository.name }}
+      build_dockerfile:
+        type: boolean
+        required: false
+        description: defines if docker build should be executed or not
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    # If the PR is coming from a fork (pull_request_target), ensure it's opened by "dependabot[bot]".
+    # Otherwise, process it normally.
+    if: |
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
+      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git Checkout
+        if: github.event_name != 'pull_request_target'
+        uses: actions/checkout@v4
+        # Do not trigger a checkout when opening PRs from a fork (helps avoid "pwn request".
+        # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target)
+        with:
+          fetch-depth: 0
+
+      - name: Dependabot Checkout
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          # Dependabot can only checkout at the HEAD of the PR branch
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          # Instead of manually configure caching of gradle, use an action which
+          # is provided. Details here: https://github.com/actions/setup-java
+          cache: gradle
+
+      - name: Check for Changes
+        uses: dorny/paths-filter@v2.11.1
+        id: changes
+        with:
+          filters: |
+            source_code:
+              - '.github/workflows/**'
+              - '${{ inputs.app_name }}/src/**'
+              - '${{ inputs.app_name }}/Dockerfile'
+              - '${{ inputs.app_name }}/build.gradle.kts'
+              - 'build.gradle.kts'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'settings.gradle.kts'
+
+
+      - name: Gradle Test
+        if: steps.changes.outputs.source_code == 'true'
+        id: tests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew build
+
+      - name: Build Docker Image
+        if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
+        id: container
+        run: |
+          docker build --file ./${{ inputs.app_name }}/Dockerfile --tag ${{ inputs.app_name }}:latest .
