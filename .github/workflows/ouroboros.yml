@@ -13,6 +13,6 @@ jobs:
       app_name: dummy-app
 
   dependabot_auto_merge:
-    needs: ci
+    needs: pipeline
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
