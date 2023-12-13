@@ -23,3 +23,6 @@ jobs:
 
   linters:
     uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
+
+  update-gradle-wrapper:
+    uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@v1
