@@ -8,11 +8,11 @@ on:
 
 jobs:
   ci:
-    uses: yonatankarp/github-actions/.github/workflows/ci.yml@main
+    uses: yonatankarp/github-actions/.github/workflows/ci.yml@v1
     with:
       app_name: dummy-app
 
   dependabot_auto_merge:
     needs: ci
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
-    uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@main
+    uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
