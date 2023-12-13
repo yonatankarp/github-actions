@@ -19,3 +19,6 @@ jobs:
 
   linters:
     uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
+    with:
+      check_docs: true
+      check_style: true
