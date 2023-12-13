@@ -25,6 +25,6 @@ jobs:
     uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
 
   upgrade-gradle-wrapper:
-    uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@v1
+    uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@add-gradle-wrapper-upgrader-pipeline
     with:
       repo-token: ${{ secrets.REVIEWER_GITHUB_TOKEN }}
