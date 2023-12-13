@@ -27,10 +27,10 @@ jobs:
   update-gradle-wrapper:
     permissions:
       actions: read
-#      contents: read
+      contents: read
       id-token: write
-#      pull-requests: write # needed for comment updates
-#      security-events: write
+      pull-requests: write # needed for comment updates
+      security-events: write
     uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@add-gradle-wrapper-upgrader-pipeline
     with:
       repo-token: ${{ secrets.REVIEWER_GITHUB_TOKEN }}
