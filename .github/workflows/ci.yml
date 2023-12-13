@@ -13,10 +13,6 @@ on:
         description: defines if docker build should be executed or not
         default: true
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build:
     # If the PR is coming from a fork (pull_request_target), ensure it's opened by "dependabot[bot]".

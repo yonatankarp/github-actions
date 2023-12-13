@@ -6,6 +6,10 @@ on:
   pull_request_target:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   pipeline:
     uses: yonatankarp/github-actions/.github/workflows/ci.yml@v1
@@ -18,7 +22,7 @@ jobs:
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
 
   linters:
-    uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
+    uses: yonatankarp/github-actions/.github/workflows/linters.yml@fix-linters-pipeline
     with:
       check_docs: true
       check_style: true

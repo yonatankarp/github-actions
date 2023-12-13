@@ -2,10 +2,6 @@ name: dependabot auto merge
 on:
   workflow_call
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   dependabot_auto_merge:
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
