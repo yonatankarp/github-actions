@@ -1,6 +1,11 @@
 name: Linters
 on:
-  workflow_call
+  workflow_call:
+    inputs:
+      repo-token:
+        type: string
+        required: true
+        description: The PAT token allows the workflow to open the PR and interact with the repository
 
 jobs:
   update-gradle-wrapper:
@@ -27,4 +32,4 @@ jobs:
         # diff.
         uses: gradle-update/update-gradle-wrapper-action@0407394b9d173dfc9cf5695f9f560fef6d61a5fe
         with:
-          repo-token: ${{ secrets.REVIEWER_GITHUB_TOKEN }}
+          repo-token: ${{ inputs.repo-token }}

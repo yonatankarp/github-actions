@@ -26,3 +26,5 @@ jobs:
 
   upgrade-gradle-wrapper:
     uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@v1
+    with:
+      repo-token: ${{ secrets.REVIEWER_GITHUB_TOKEN }}
