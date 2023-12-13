@@ -7,6 +7,11 @@ on:
         required: false
         description: the application name
         default: ${{ github.event.repository.name }}
+      context:
+        type: string
+        required: false
+        description: the context in which CI should look for the code
+        default: ${{ github.event.repository.name }}
       build_dockerfile:
         type: boolean
         required: false
@@ -53,14 +58,13 @@ jobs:
           filters: |
             source_code:
               - '.github/workflows/**'
-              - '${{ inputs.app_name }}/src/**'
-              - '${{ inputs.app_name }}/Dockerfile'
-              - '${{ inputs.app_name }}/build.gradle.kts'
+              - '${{ inputs.context }}/src/**'
+              - '${{ inputs.context }}/Dockerfile'
+              - '${{ inputs.context }}/build.gradle.kts'
               - 'build.gradle.kts'
               - 'gradlew'
               - 'gradlew.bat'
               - 'settings.gradle.kts'
-
 
       - name: Gradle Test
         if: steps.changes.outputs.source_code == 'true'
