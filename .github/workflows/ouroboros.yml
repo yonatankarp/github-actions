@@ -22,7 +22,4 @@ jobs:
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
 
   linters:
-    uses: yonatankarp/github-actions/.github/workflows/linters.yml@fix-linters-pipeline
-    with:
-      check_docs: true
-      check_style: true
+    uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
