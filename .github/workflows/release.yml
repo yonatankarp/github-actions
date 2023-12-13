@@ -1,0 +1,58 @@
+name: Release
+on:
+  workflow_call:
+    inputs:
+      module-name:
+        type: string
+        required: false
+        description: |
+          the name of the module to build and release, if none provided, the
+          project would be assumed as none-modular Gradle project
+        default: ""
+      tag:
+        type: string
+        required: false
+        description: the tag of this release (e.g. for SemVer `1.2.3`)
+        default: ""
+
+jobs:
+  artifact:
+    name: Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Release Tag
+        id: next-tag
+        run:
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Set Artifact Version
+        run: |
+          echo Artifact version: ${{ steps.next-tag.outputs.tag }}
+          echo "version=${{ steps.next-tag.outputs.tag }}" > gradle.properties
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'temurin'
+          #Instead of manually configure caching of gradle, use an action which is provided. Details here: https://github.com/actions/setup-java
+          cache: gradle
+
+      - name: Gradle Build
+        id: build
+        env:
+          module_name: ${{ inputs.module-name }}
+        run: |
+          if [ ! -n "$MODULE_NAME" ]; then
+            ./gradlew build
+          else
+            ./gradlew :${{ inputs.module-name }}:build
+          fi
+
+      - name: Publish Artifact
+        id: publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew publishMavenPublicationToGitHubPackagesRepository
