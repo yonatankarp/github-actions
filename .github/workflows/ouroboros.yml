@@ -16,3 +16,6 @@ jobs:
     needs: pipeline
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
+
+  linters:
+    uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1

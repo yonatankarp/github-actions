@@ -1,0 +1,68 @@
+name: Linters
+on:
+  workflow_call:
+    inputs:
+      check_docs:
+        type: boolean
+        required: false
+        description: Whether or not to lint all markdown files in the project
+        default: true
+      check_style:
+        type: boolean
+        required: false
+        description: Whether or not to run spotless
+        default: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linters:
+    name: Linters
+    # If the PR is coming from a fork (pull_request_target), ensure it's opened by "dependabot[bot]".
+    # Otherwise, clone it normally.
+    if: |
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') ||
+      (github.event_name != 'pull_request_target' && github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Git Checkout
+        if: ${{ github.event_name != 'pull_request_target' }}
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          fetch-depth: 0
+
+      - name: Checkout PR
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check for Changes
+        uses: dorny/paths-filter@v2.11.1
+        id: changes
+        with:
+          filters: |
+            source_code:
+              - '**/src/**'
+              - '**/Dockerfile'
+              - '**/build.gradle.kts'
+            docs:
+              - README.md
+              - 'docs/**'
+
+      - name: Lint Documents
+        if: inputs.check_docs && steps.changes.outputs.docs == 'true'
+        uses: avto-dev/markdown-lint@v1.5.0
+        continue-on-error: true
+        with:
+          config: './config/markdown-lint/rules.json'
+          args: '**/*.md'
+
+      - name: Check Style
+        if: inputs.check_style && steps.changes.outputs.source_code == 'true'
+        id: spotless
+        continue-on-error: true
+        run: ./gradlew spotlessCheck
