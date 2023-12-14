@@ -18,7 +18,7 @@ jobs:
 
   pipeline_dockerfile_test:
     name: "[ test ] pipeline - dockerfile on project root directory:"
-    uses: yonatankarp/github-actions/.github/workflows/ci.yml@v1
+    uses: yonatankarp/github-actions/.github/workflows/ci.yml@fix-docker-build # TODO: fix tag
     with:
       app_name: dummy-app
       dockerfile_path: "./Dockerfile"
