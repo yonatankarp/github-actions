@@ -11,27 +11,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-#  pipeline:
-#    uses: yonatankarp/github-actions/.github/workflows/ci.yml@v1
-#    with:
-#      app_name: dummy-app
+  pipeline:
+    uses: ./.github/workflows/ci.yml
+    with:
+      app_name: dummy-app
 
   pipeline_dockerfile_test:
     name: "[ test ] pipeline - dockerfile on project root directory:"
-    uses: yonatankarp/github-actions/.github/workflows/ci.yml@fix-docker-build # TODO: fix tag
+    uses: ./.github/workflows/ci.yml
     with:
       app_name: dummy-app
       dockerfile_path: "./Dockerfile"
-#
-#  dependabot_auto_merge:
-#    needs: pipeline
-#    if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
-#    uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v1
-#    secrets:
-#      GITHUB_PAT: ${{ secrets.CI_PAT }}
-#
-#  linters:
-#    uses: yonatankarp/github-actions/.github/workflows/linters.yml@v1
-#
-#  update-gradle-wrapper:
-#    uses:  yonatankarp/github-actions/.github/workflows/update-gradle-wrapper.yml@v1
+
+  dependabot_auto_merge:
+    needs: pipeline
+    if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
+    uses: ./.github/workflows/dependabot-auto-merge.yml
+    secrets:
+      GITHUB_PAT: ${{ secrets.CI_PAT }}
+
+  linters:
+    uses: ./.github/workflows/linters.yml
+
+  update-gradle-wrapper:
+    uses: ./.github/workflows/update-gradle-wrapper.yml
