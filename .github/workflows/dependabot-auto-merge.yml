@@ -1,6 +1,10 @@
 name: dependabot auto merge
 on:
-  workflow_call
+  workflow_call:
+    secrets:
+      GITHUB_PAT:
+        required: true
+        description: PAT with access of merging PRs to the repository
 
 jobs:
   dependabot_auto_merge:
@@ -24,7 +28,7 @@ jobs:
         run: gh pr review --approve "$PR_URL" && sleep 5
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.REVIEWER_GITHUB_TOKEN }}
+          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
 
       - name: Enable auto-merge for Dependabot PRs
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
@@ -33,7 +37,7 @@ jobs:
         id: auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
 
       - name: Move tag to current commit
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||

@@ -21,7 +21,7 @@ on:
         type: string
         required: false
         description: the location of the dockerfile related to this module
-        default: ${{ inputs.app_name }}/Dockerfile
+        default: ""
 
 jobs:
   build:
@@ -56,6 +56,15 @@ jobs:
           # is provided. Details here: https://github.com/actions/setup-java
           cache: gradle
 
+      - name: Find Dockerfile Location
+        id: dockerfile
+        run: |
+          if [ ! -n ${{ inputs.dockerfile_path }} ]; then
+            echo "location=${{ inputs.dockerfile_path }}" >> $GITHUB_OUTPUT
+          else
+            echo "location=${{ inputs.app_name }}/Dockerfile" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check for Changes
         uses: dorny/paths-filter@v2.11.1
         id: changes
@@ -64,7 +73,7 @@ jobs:
             source_code:
               - '.github/workflows/**'
               - '${{ inputs.context }}/src/**'
-              - '${{ inputs.dockerfile_path }}'
+              - '${{ steps.dockerfile.outputs.location }}'
               - '${{ inputs.context }}/build.gradle.kts'
               - 'build.gradle.kts'
               - 'gradlew'
@@ -81,5 +90,4 @@ jobs:
       - name: Build Docker Image
         if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
         id: container
-        run: |
-          docker build --file ${{ inputs.dockerfile_path }} --tag ${{ inputs.app_name }}:latest .
+        run: docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${{ inputs.app_name }}:latest" .
