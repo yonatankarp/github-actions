@@ -57,11 +57,13 @@ jobs:
 
       - name: Find Dockerfile Location
         id: dockerfile
+        env:
+          dockerfile: ${{ inputs.dockerfile_path }}
         run: |
-          if [ -z ${{ inputs.dockerfile_path }} ]; then
+          if [ -z ${dockerfile} ]; then
             echo "location=${{ inputs.app_name }}/Dockerfile" >> $GITHUB_OUTPUT
           else
-           echo "location=${{ inputs.dockerfile_path }}" >> $GITHUB_OUTPUT
+           echo "location=${dockerfile}" >> $GITHUB_OUTPUT
           fi
 
       - name: Check for Changes
