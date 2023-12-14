@@ -21,7 +21,6 @@ on:
         type: string
         required: false
         description: the location of the dockerfile related to this module
-        default: ""
 
 jobs:
   build:
