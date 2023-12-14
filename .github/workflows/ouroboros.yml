@@ -16,6 +16,13 @@ jobs:
     with:
       app_name: dummy-app
 
+  pipeline_dockerfile_test:
+    name: "[ test ] pipeline - dockerfile on project root directory:"
+    uses: yonatankarp/github-actions/.github/workflows/ci.yml@v1
+    with:
+      app_name: dummy-app
+      dockerfile_path: "./Dockerfile"
+
   dependabot_auto_merge:
     needs: pipeline
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
