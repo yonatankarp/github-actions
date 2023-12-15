@@ -1,6 +1,10 @@
 name: Linters
 on:
   workflow_call:
+    secrets:
+      GITHUB_PAT:
+        required: true
+        description: PAT with access to open PRs on this repository
 
 jobs:
   update-gradle-wrapper:
@@ -22,4 +26,4 @@ jobs:
       - name: Update Gradle Wrapper
         uses: gradle-update/update-gradle-wrapper-action@v1
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_PAT }}
