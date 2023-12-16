@@ -18,11 +18,14 @@ runs:
     - name: Find Dockerfile Location
       id: dockerfile
       shell: bash
+      env:
+        dockefile_path: ${{ inputs.dockerfile-path }}
+        module_name: ${{ inputs.module-name }}
       run: |
-        if [ -n "${{ inputs.dockerfile-path }}" ]; then
-          echo "::set-output name=location::${{ inputs.dockerfile-path }}"
-        elif [-n "${{ inputs.module-name }}"]; then
-          echo "::set-output name=location::(${{ inputs.module-name }}/Dockerfile)"
+        if [ -n "${dockefile_path}" ]; then
+          echo "::set-output name=location::${dockefile_path}"
+        elif [-n "${module_name}"]; then
+          echo "::set-output name=location::(${module_name}/Dockerfile)"
         else
           echo "Both dockerfile-path and module-name are empty"
           exit 1
