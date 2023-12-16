@@ -4,7 +4,7 @@ inputs:
   module-name:
     description: 'Module name for Gradle build'
     required: false
-  dockerfile_path:
+  dockerfile-path:
     description: |
       An option to override the default dockerfile location, if none supplied the
       return value would be ${{ inputs.module_name}}/Dockerfile
@@ -21,11 +21,11 @@ runs:
       id: dockerfile
       shell: bash
       run: |
-        if [ -n "${{ inputs.dockerfile_path }}" ]; then
-          echo "::set-output name=location::${{ inputs.dockerfile_path }}"
-        elif [ -n "${{ inputs.app_name }}" ]; then
-          echo "::set-output name=location::(${{ inputs.app_name }}/Dockerfile)"
+        if [ -n "${{ inputs.dockerfile-path }}" ]; then
+          echo "::set-output name=location::${{ inputs.dockerfile-path }}"
+        elif [ -n "${{ inputs.module-name }}" ]; then
+          echo "::set-output name=location::(${{ inputs.module-name }}/Dockerfile)"
         else
-            echo "Error: Neither dockerfile_path nor app_name is provided."
+            echo "Error: Neither dockerfile-path nor module-name is provided."
             exit 1
         fi
