@@ -25,3 +25,13 @@ jobs:
         uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
         with:
           tag: "test-tag"
+
+      - name: "[test] - Get Dockrfile for module - use dockerfile override"
+        uses: yonatankarp/github-actions/.github/actions/get-docker-image@
+        with:
+          dockerfile_path: "dockerfile-location"
+
+      - name: "[test] Get Dockrfile for module - fallback to module"
+        uses: yonatankarp/github-actions/.github/actions/get-docker-image@
+        with:
+          module-name: "test-tag"
