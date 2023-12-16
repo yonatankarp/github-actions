@@ -39,10 +39,9 @@ jobs:
 #      GITHUB_PAT: ${{ secrets.CI_PAT }}
 #
 
-  release-jar:
-    runs-on: ubuntu-latest
-    steps:
-      - name: release
-        uses: yonatankarp/github-actions/.github/actions/build-artifact-jar@extract-build-jar-to-composite-action
-        with:
-          tag: 0.1.0
+  releases-jar:
+    uses: ./.github/workflows/release-jar.yml
+    with:
+      tag: "0.2.0"
+    secrets:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
