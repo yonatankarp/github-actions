@@ -37,3 +37,9 @@ jobs:
     uses: ./.github/workflows/update-gradle-wrapper.yml
     secrets:
       GITHUB_PAT: ${{ secrets.CI_PAT }}
+
+
+  release-jar:
+    uses: ./github/workflow/release-jar.yml
+    with:
+      tag: 0.1.0

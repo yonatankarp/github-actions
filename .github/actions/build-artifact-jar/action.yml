@@ -1,0 +1,43 @@
+name: 'Jar Build Steps'
+description: 'Checks out code, sets up Java, and runs Gradle build'
+inputs:
+  tag:
+    description: 'Release tag for setting image version'
+    required: true
+  module-name:
+    description: 'Module name for Gradle build'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Install Java
+      uses: actions/setup-java@v4
+      with:
+        java-version: 17
+        distribution: 'temurin'
+        #Instead of manually configure caching of gradle, use an action which is provided. Details here: https://github.com/actions/setup-java
+        cache: gradle
+
+    - name: Set Artifact Version
+      env:
+        release_tag: ${{ inputs.tag }}
+      shell: bash
+      run: |
+        echo Artifact version: ${release_tag}
+        echo "version=${release_tag}" > gradle.properties
+
+    - name: Gradle Build
+      id: build
+      shell: bash
+      env:
+        module_name: ${{ inputs.module-name }}
+      run: |
+        if [ ! -n "$MODULE_NAME" ]; then
+          ./gradlew build
+        else
+          ./gradlew :${{ inputs.module-name }}:build
+        fi
