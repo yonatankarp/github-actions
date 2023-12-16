@@ -13,11 +13,6 @@ on:
         type: string
         required: true
         description: the tag of this release (e.g. for SemVer `1.2.3`)
-      current-branch:
-        type: string
-        required: false
-        description: The current branch name to use for internal actions
-        default: ${{ github.head_ref || github.ref_name }}
     secrets:
       GITHUB_PAT:
         required: true
@@ -30,7 +25,7 @@ jobs:
     steps:
 
       - name: Java Build Process
-        uses: yonatankarp/github-actions/.github/actions/build-artifact-jar@${{ inputs.current-branch }}
+        uses: yonatankarp/github-actions/.github/actions/build-artifact-jar@${{ github.head_ref }}
         with:
           tag: ${{ inputs.tag }}
           module-name: ${{ inputs.module-name }}
