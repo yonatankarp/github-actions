@@ -25,7 +25,7 @@ jobs:
     steps:
 
       - name: Java Build Process
-        uses: ./.github/actions/build-artifact-jar
+        uses: ./.github/actions/build-artifact-jar@extract-build-jar-to-composite-action
         with:
           tag: ${{ inputs.tag }}
           module-name: ${{ inputs.module-name }}
