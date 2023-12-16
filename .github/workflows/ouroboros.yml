@@ -40,6 +40,6 @@ jobs:
 
 
   release-jar:
-    uses: ./github/workflow/release-jar.yml
+    uses: ./github/workflow/release-jar.yml@extract-build-jar-to-composite-action
     with:
       tag: 0.1.0
