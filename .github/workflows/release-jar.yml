@@ -25,7 +25,7 @@ jobs:
     steps:
 
       - name: Java Build Process
-        uses: yonatankarp/github-actions/.github/actions/build-artifact-jar@${{ github.head_ref }}
+        uses: yonatankarp/github-actions/.github/actions/build-artifact-jar@extract-build-jar-to-composite-action
         with:
           tag: ${{ inputs.tag }}
           module-name: ${{ inputs.module-name }}
