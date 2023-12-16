@@ -23,33 +23,12 @@ jobs:
     name: Artifact
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
 
-      - name: Set Artifact Version
-        env:
-          release_tag: ${{ inputs.tag }}
-        run: |
-          echo Artifact version: ${release_tag}
-          echo "version=${release_tag}" > gradle.properties
-
-      - name: Install Java
-        uses: actions/setup-java@v4
+      - name: Build JAR artifact
+        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
         with:
-          java-version: 17
-          distribution: 'temurin'
-          #Instead of manually configure caching of gradle, use an action which is provided. Details here: https://github.com/actions/setup-java
-          cache: gradle
-
-      - name: Gradle Build
-        id: build
-        env:
-          module_name: ${{ inputs.module-name }}
-        run: |
-          if [ ! -n "$MODULE_NAME" ]; then
-            ./gradlew build
-          else
-            ./gradlew :${{ inputs.module-name }}:build
-          fi
+          module-name: ${{ input.module-name }}
+          tag: ${{ inputs.tag }}
 
       - name: Publish Artifact
         id: publish
