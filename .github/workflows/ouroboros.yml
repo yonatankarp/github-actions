@@ -43,6 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: release
-        uses: yonatankarp/github-actions/.github/workflow/release-jar@extract-build-jar-to-composite-action
+        uses: yonatankarp/github-actions/.github/actions/release-jar@extract-build-jar-to-composite-action
         with:
           tag: 0.1.0
