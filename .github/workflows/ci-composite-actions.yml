@@ -29,11 +29,11 @@ jobs:
       - name: "[test] - Get Dockrfile for module - use dockerfile override"
         uses: yonatankarp/github-actions/.github/actions/get-docker-image-path@extract-dockerfile-location
         with:
-          module_name: ""
-          dockerfile_path: "dockerfile-location"
+          module-name: ""
+          dockerfile-path: "dockerfile-location"
 
       - name: "[test] Get Dockrfile for module - fallback to module"
         uses: yonatankarp/github-actions/.github/actions/get-docker-image-path@extract-dockerfile-location
         with:
           module-name: "test-tag"
-          dockerfile_path: ""
+          dockerfile-path: ""
