@@ -1,0 +1,27 @@
+name: CI for Composite Actions
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/actions/**'
+      - '.github/workflows/ci-composite-actions.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-composite-actions:
+    runs-on: ubuntu-latest
+    name: Test Composite Actions
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: build jar artifact
+        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
+        with:
+          tag: "test-tag"
