@@ -9,8 +9,8 @@ inputs:
     required: false
 outputs:
   location:
-    value: string
     description: the location of the dockerfile that should be used
+    value: ${{ steps.dockerfile.outputs.location }}
 
 runs:
   using: 'composite'
@@ -18,14 +18,11 @@ runs:
     - name: Find Dockerfile Location
       id: dockerfile
       shell: bash
-      env:
-        dockefile_path: ${{ inputs.dockerfile-path }}
-        module_name: ${{ inputs.default-directory }}
       run: |
-        if [ -n "${dockefile_path}" ]; then
-          echo "::set-output name=location::${dockefile_path}"
-        elif [-n "${module_name}"]; then
-          echo "::set-output name=location::(${module_name}/Dockerfile)"
+        if [ -n "${{ inputs.dockerfile-path }}" ]; then
+          echo "location=${{ inputs.dockerfile-path }}" >> $GITHUB_OUTPUT
+        elif [-n "${{ inputs.default-directory }}"]; then
+          echo "location=${{ inputs.default-directory }}/Dockerfile" >> $GITHUB_OUTPUT
         else
           echo "Both dockerfile-path and default-directory are empty"
           exit 1
