@@ -71,6 +71,7 @@ jobs:
           filters: |
             source_code:
               - '.github/workflows/**'
+              - 'gradle/libs.versions.toml'
               - '${{ inputs.context }}/src/**'
               - '${{ steps.dockerfile.outputs.location }}'
               - '${{ inputs.context }}/build.gradle.kts'
