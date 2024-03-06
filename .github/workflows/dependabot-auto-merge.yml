@@ -4,14 +4,14 @@ on:
     inputs:
       auto-update-tag:
         type: boolean
-        description: Indicates weather or not to run the ./bin/replace-tag.sh to update the tag of repository after successful merge
+        description: Indicates weather or not to run the ${{ inputs.tagging-script-path}} to update the tag of repository after successful merge
         default: false
         required: false
       tagging-script-path:
         type: string
         description: the path to the script to execute in order to tag the repository
         required: false
-        default: ./bin/replace-tag.sh
+        default: ./bin/replace-tags.sh
     secrets:
       GITHUB_PAT:
         required: true
@@ -24,6 +24,13 @@ jobs:
     env:
       TAG_VERSION: "v1"
     steps:
+
+      - name: Dependabot Checkout
+        if: ${{ inputs.auto-update-tag }} == true && github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          # Dependabot can only checkout at the HEAD of the PR branch
+          ref: ${{ github.event.pull_request.head.sha }}
 
       # If the PR is created by Dependabot run additional steps
       - name: Fetch Dependabot metadata
