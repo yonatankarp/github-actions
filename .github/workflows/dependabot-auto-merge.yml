@@ -4,7 +4,7 @@ on:
     inputs:
       auto-update-tag:
         type: boolean
-        description: Indicates weather or not to run the ${{ inputs.tagging-script-path}} to update the tag of repository after successful merge
+        description: Indicates weather or not to run the inputs.tagging-script-path to update the tag of repository after successful merge
         default: false
         required: false
       tagging-script-path:
