@@ -85,7 +85,7 @@ jobs:
         id: tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew build
+        run: ./gradlew build --info
 
       - name: Build Docker Image
         if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
