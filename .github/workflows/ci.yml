@@ -49,7 +49,7 @@ jobs:
       - name: Install Java
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin'
           # Instead of manually configure caching of gradle, use an action which
           # is provided. Details here: https://github.com/actions/setup-java
