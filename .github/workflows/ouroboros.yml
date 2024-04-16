@@ -42,3 +42,12 @@ jobs:
     uses: ./.github/workflows/update-gradle-wrapper.yml
     secrets:
       GITHUB_PAT: ${{ secrets.CI_PAT }}
+
+  actions-linter:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: devops-actions/actionlint@v0.1.2
