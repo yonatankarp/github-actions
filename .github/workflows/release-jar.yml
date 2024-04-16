@@ -27,7 +27,7 @@ jobs:
       - name: Build JAR artifact
         uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
         with:
-          module-name: ${{ input.module-name }}
+          module-name: ${{ inputs.module-name }}
           tag: ${{ inputs.tag }}
 
       - name: Publish Artifact
