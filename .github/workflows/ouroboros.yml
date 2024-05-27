@@ -30,7 +30,7 @@ jobs:
     name: "[ test ] pipeline - docker image name contains mixture of upper and lower letters:"
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: Yet-Another-Dummy-APP
+      app_name: Yet-Another-Dummy-App
 
   dependabot_auto_merge:
     needs: pipeline
