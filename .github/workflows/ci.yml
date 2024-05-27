@@ -92,4 +92,4 @@ jobs:
         id: container
         run: |
           sanitized_app_name=$(echo "${{ inputs.app_name }}" | tr '[:upper:]' '[:lower:]')
-          docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${{sanitized_app_name}}:latest" .
+          docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${sanitized_app_name}:latest" .
