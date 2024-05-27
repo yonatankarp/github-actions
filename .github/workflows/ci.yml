@@ -90,4 +90,6 @@ jobs:
       - name: Build Docker Image
         if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
         id: container
-        run: docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${{ inputs.app_name }}:latest" .
+        run: |
+          sanitized_app_name=$(echo "${{ inputs.app_name }}" | tr '[:upper:]' '[:lower:]')
+          docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${sanitized_app_name}:latest" .

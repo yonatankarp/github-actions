@@ -26,6 +26,12 @@ jobs:
       app_name: dummy-app
       dockerfile_path: "./Dockerfile"
 
+  pipeline_docker_image_name_uppoercase:
+    name: "[ test ] pipeline - docker image name contains mixture of upper and lower letters:"
+    uses: ./.github/workflows/ci.yml
+    with:
+      app_name: Yet-Another-Dummy-App
+
   dependabot_auto_merge:
     needs: pipeline
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
