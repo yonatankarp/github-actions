@@ -56,4 +56,4 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: devops-actions/actionlint@v0.1.2
+      - uses: devops-actions/actionlint@v0.1.3
