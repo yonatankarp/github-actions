@@ -19,7 +19,7 @@ on:
 
 jobs:
   dependabot_auto_merge:
-    if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
+    if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
     env:
       TAG_VERSION: "v1"

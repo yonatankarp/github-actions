@@ -12,7 +12,6 @@ jobs:
 
     steps:
       - name: Checkout PR
-        if: ${{ github.event_name != 'pull_request_target' }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
