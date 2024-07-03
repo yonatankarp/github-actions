@@ -75,12 +75,23 @@ jobs:
               - 'gradlew.bat'
               - 'settings.gradle.kts'
 
+      - name: Determine Gradle Build Command
+        id: gradle_build
+        run: |
+          if [ -f "${{ inputs.context }}/build.gradle.kts" ] && [ "${{ inputs.context }}" != "." ]; then 
+            echo "command=build :${{ inputs.context }}:build" >> "$GITHUB_OUTPUT"
+            echo "Build command: 'build :${{ inputs.context }}:build' for subproject: ${{ inputs.context }}"
+          else
+            echo "command=build" >> "$GITHUB_OUTPUT"
+            echo "Build command: 'build' for root project"
+          fi
+
       - name: Gradle Test
         if: steps.changes.outputs.source_code == 'true'
         id: tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew build
+        run: ./gradlew ${{ steps.gradle_build.outputs.command }}
 
       - name: Build Docker Image
         if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
