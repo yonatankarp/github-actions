@@ -22,13 +22,16 @@ jobs:
         if: github.actor != 'dependabot[bot]'
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR
         if: github.actor == 'dependabot[bot]'
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check for Changes
         uses: dorny/paths-filter@v3.0.2
