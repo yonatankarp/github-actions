@@ -32,7 +32,8 @@ jobs:
         # Do not trigger a checkout when opening PRs from a fork (helps avoid "pwn request".
         # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows#pull_request_target)
         with:
-          fetch-depth: 0
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Dependabot Checkout
         if: github.actor == 'dependabot[bot]'
@@ -40,6 +41,8 @@ jobs:
         with:
           # Dependabot can only checkout at the HEAD of the PR branch
           ref: ${{ github.event.pull_request.head.sha }}
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Java
         uses: actions/setup-java@v4

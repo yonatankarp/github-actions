@@ -31,6 +31,8 @@ jobs:
         with:
           # Dependabot can only checkout at the HEAD of the PR branch
           ref: ${{ github.event.pull_request.head.sha }}
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       # If the PR is created by Dependabot run additional steps
       - name: Fetch Dependabot metadata
