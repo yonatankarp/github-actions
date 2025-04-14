@@ -1,0 +1,29 @@
+name: 'Detect Dockerfile location'
+description: 'Decides which location the docker file is located at'
+inputs:
+  default-directory:
+    description: 'Module name for Gradle build'
+    required: false
+  dockerfile-path:
+    description: 'An option to override the default dockerfile location, if none supplied the return value would be ${{ inputs.default-directory}}/Dockerfile'
+    required: false
+outputs:
+  location:
+    description: the location of the dockerfile that should be used
+    value: ${{ steps.dockerfile.outputs.location }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Find Dockerfile Location
+      id: dockerfile
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.dockerfile-path }}" ]; then
+          echo "location=${{ inputs.dockerfile-path }}" >> $GITHUB_OUTPUT
+        elif [-n "${{ inputs.default-directory }}"]; then
+          echo "location=${{ inputs.default-directory }}/Dockerfile" >> $GITHUB_OUTPUT
+        else
+          echo "Both dockerfile-path and default-directory are empty"
+          exit 1
+        fi
