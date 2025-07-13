@@ -4,7 +4,7 @@ description: 'Checks out code, sets up Java, and runs Gradle build'
 inputs:
   module-name:
     description: 'Module name for Gradle build'
-    required: false
+    required: true
   tag:
     description: 'Release tag for setting image version'
     required: true
