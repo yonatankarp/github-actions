@@ -1,5 +1,6 @@
 name: 'Jar Build Steps'
 description: 'Checks out code, sets up Java, and runs Gradle build'
+
 inputs:
   module-name:
     description: 'Module name for Gradle build'
@@ -7,38 +8,41 @@ inputs:
   tag:
     description: 'Release tag for setting image version'
     required: true
+  github-token:
+    description: 'GitHub token for submodule checkout'
+    required: true
+  jvm-version:
+    description: 'Java version to use'
+    required: false
+    default: '21'
 
 runs:
   using: 'composite'
   steps:
 
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github-token }}
 
     - name: Install Java
       uses: actions/setup-java@v4
       with:
-        java-version: 21
+        java-version: ${{ inputs.jvm-version }}
         distribution: 'temurin'
-        #Instead of manually configure caching of gradle, use an action which is provided. Details here: https://github.com/actions/setup-java
         cache: gradle
 
     - name: Set Artifact Version
-      env:
-        release_tag: ${{ inputs.tag }}
       shell: bash
       run: |
-        echo Artifact version: ${release_tag}
-        echo "version=${release_tag}" > gradle.properties
+        echo "Artifact version: ${{ inputs.tag }}"
+        echo "version=${{ inputs.tag }}" > gradle.properties
+
     - name: Gradle Build
-      id: build
       shell: bash
-      env:
-        module_name: ${{ inputs.module-name }}
       run: |
-        if [ ! -n "$MODULE_NAME" ]; then
+        if [ -z "${{ inputs.module-name }}" ]; then
           ./gradlew build
         else
           ./gradlew :${{ inputs.module-name }}:build
