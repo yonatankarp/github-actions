@@ -1,68 +1,66 @@
 name: dependabot auto merge
-
 on:
   workflow_call:
     inputs:
       auto-update-tag:
         type: boolean
-        description: Run tagging script after successful merge
+        description: Indicates weather or not to run the inputs {{ tagging-script-path }} to update the tag of repository after successful merge
         default: false
         required: false
       tagging-script-path:
         type: string
-        description: Path to a script that tags the repo
-        default: ./bin/replace-tags.sh
+        description: the path to the script to execute in order to tag the repository
         required: false
+        default: ./bin/replace-tags.sh
     secrets:
       GITHUB_PAT:
-        required: false
-        description: Optional PAT if you need a human approval identity
+        required: true
+        description: PAT with access of merging PRs to the repository
 
 jobs:
   dependabot_auto_merge:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     env:
-      TAG_VERSION: v1
-      # Prefer PAT if provided; else use the workflow token
-      GH_TOKEN: ${{ secrets.GITHUB_PAT || github.token }}
-      PR_URL: ${{ github.event.pull_request.html_url }}
-
+      TAG_VERSION: "v1"
     steps:
-      # Only needed if you actually run a script from the repo (tagging)
-      - name: Checkout (for tagging script)
-        if: inputs.auto-update-tag
+
+      - name: Dependabot Checkout
+        if: ${{ inputs.auto-update-tag  == true && github.event_name == 'pull_request_target' }}
         uses: actions/checkout@v4
         with:
-          # For Dependabot PRs in the same repo this is safe
+          # Dependabot can only checkout at the HEAD of the PR branch
           ref: ${{ github.event.pull_request.head.sha }}
-          submodules: recursive
-          token: ${{ env.GH_TOKEN }}
+          submodules: 'recursive'
+          token: ${{ secrets.GITHUB_TOKEN }}
 
+      # If the PR is created by Dependabot run additional steps
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: ${{ env.GH_TOKEN }}
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Approve a Dependabot PR (minor/patch)
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch'
-        run: gh pr review --approve "$PR_URL"
+      - name: Approve a Dependabot PR
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
+        # Approving the PR and waiting for 5 sec to let GitHub UI to reflect the changes
+        run: gh pr review --approve "$PR_URL" && sleep 5
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
 
-      - name: Enable auto-merge (minor/patch)
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch'
+      - name: Enable auto-merge for Dependabot PRs
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
         run: gh pr merge --auto --rebase "$PR_URL"
+        id: auto-merge
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
 
       - name: Move tag to current commit
-        if: |
-          inputs.auto-update-tag &&
-          (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-           steps.metadata.outputs.update-type == 'version-update:semver-patch')
-        run: sh "${{ inputs.tagging-script-path }}" "${{ env.TAG_VERSION }}"
+        if: ${{ inputs.auto-update-tag == 'true' && 
+              (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+               steps.metadata.outputs.update-type == 'version-update:semver-patch') }}
+        run: sh ${{ inputs.tagging-script-path }} ${{ env.TAG_VERSION }}
