@@ -17,6 +17,10 @@ on:
         required: true
         description: PAT with access of merging PRs to the repository
 
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   dependabot_auto_merge:
     if: github.actor == 'dependabot[bot]'
