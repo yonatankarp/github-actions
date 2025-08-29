@@ -50,6 +50,9 @@ jobs:
     needs: pipeline
     if: ${{ github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]' }}
     uses: ./.github/workflows/dependabot-auto-merge.yml
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       auto-update-tag: true
     secrets:
