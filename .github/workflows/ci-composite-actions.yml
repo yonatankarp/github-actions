@@ -19,12 +19,14 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: build jar artifact
-        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
+        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@v1
         with:
           tag: "test-tag"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          module-name: ''

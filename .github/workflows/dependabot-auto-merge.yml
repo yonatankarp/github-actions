@@ -37,12 +37,10 @@ jobs:
       TAG_VERSION: v1
     steps:
       - name: Dependabot Checkout
-        if: ${{ inputs.auto-update-tag  == true && github.event_name ==
-          'pull_request_target' }}
-        uses: actions/checkout@v4
+        if: ${{ inputs.auto-update-tag  == true }}
+        uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          submodules: recursive
+          submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # If the PR is created by Dependabot, run additional steps
