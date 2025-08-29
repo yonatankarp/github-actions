@@ -1,4 +1,5 @@
-name: dependabot auto merge
+---
+name: Dependabot auto-merge
 on:
   workflow_call:
     inputs:
@@ -13,18 +14,24 @@ on:
         required: false
         default: ./bin/replace-tags.sh
     secrets:
-      GITHUB_PAT:
+      DEPENDABOT_MERGE_TOKEN:
+        description: "token which belongs to a user that can approve and merge pr's"
         required: true
-        description: PAT with access of merging PRs to the repository
 
 permissions:
-  pull-requests: write
   contents: write
+  pull-requests: write
+
+# The latest build tags the produced image with `latest` (or `pr-N` for PRs) tag. Concurrent builds can potentially cause
+# inconsistency, e.g., when an older build finishes after the latest build. Currently, such inconsistency is still
+# possible when an older build is replayed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  dependabot_auto_merge:
-    if: github.actor == 'dependabot[bot]'
+  dependabot:
     runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
     env:
       TAG_VERSION: "v1"
     steps:
@@ -38,30 +45,35 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # If the PR is created by Dependabot run additional steps
+      # If the PR is created by Dependabot, run additional steps
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Approve a Dependabot PR
+	  
+      - name: Approval for Dependabot PR
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
-        # Approving the PR and waiting for 5 sec to let GitHub UI to reflect the changes
-        run: gh pr review --approve "$PR_URL" && sleep 5
+        run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
+          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
+
+      - name: Wait for Status Checks
+        run: gh pr checks -i 20 --watch --required "${PR_URL}"
+        env:
+          PR_URL:  ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
 
       - name: Enable auto-merge for Dependabot PRs
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
-        run: gh pr merge --auto --rebase "$PR_URL"
+        run: gh pr merge --admin --rebase "$PR_URL"
         id: auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GITHUB_TOKEN: "${{ secrets.GITHUB_PAT }}"
+          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
 
       - name: Move tag to current commit
         if: ${{ inputs.auto-update-tag == 'true' && 
