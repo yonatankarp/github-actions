@@ -5,12 +5,13 @@ on:
     inputs:
       auto-update-tag:
         type: boolean
-        description: Indicates weather or not to run the inputs {{ tagging-script-path }} to update the tag of repository after successful merge
+        description: Indicates whether or not to run the inputs {{ tagging-script-path
+          }} to update the tag of the repository after a successful merge
         default: false
         required: false
       tagging-script-path:
         type: string
-        description: the path to the script to execute in order to tag the repository
+        description: the path to the script to execute to tag the repository
         required: false
         default: ./bin/replace-tags.sh
     secrets:
@@ -33,16 +34,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     env:
-      TAG_VERSION: "v1"
+      TAG_VERSION: v1
     steps:
-
       - name: Dependabot Checkout
-        if: ${{ inputs.auto-update-tag  == true && github.event_name == 'pull_request_target' }}
+        if: ${{ inputs.auto-update-tag  == true && github.event_name ==
+          'pull_request_target' }}
         uses: actions/checkout@v4
         with:
-          # Dependabot can only checkout at the HEAD of the PR branch
           ref: ${{ github.event.pull_request.head.sha }}
-          submodules: 'recursive'
+          submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # If the PR is created by Dependabot, run additional steps
@@ -50,8 +50,7 @@ jobs:
         id: metadata
         uses: dependabot/fetch-metadata@v2
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Approval for Dependabot PR
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
@@ -65,7 +64,6 @@ jobs:
         env:
           PR_URL:  ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
-
       - name: Enable auto-merge for Dependabot PRs
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
@@ -74,9 +72,8 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
-
       - name: Move tag to current commit
-        if: ${{ inputs.auto-update-tag == 'true' && 
-              (steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-               steps.metadata.outputs.update-type == 'version-update:semver-patch') }}
+        if: ${{ inputs.auto-update-tag == 'true' && (steps.metadata.outputs.update-type
+          == 'version-update:semver-minor' || steps.metadata.outputs.update-type
+          == 'version-update:semver-patch') }}
         run: sh ${{ inputs.tagging-script-path }} ${{ env.TAG_VERSION }}
