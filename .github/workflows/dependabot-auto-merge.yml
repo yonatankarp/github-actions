@@ -15,7 +15,7 @@ on:
         required: false
         default: ./bin/replace-tags.sh
     secrets:
-      DEPENDABOT_MERGE_TOKEN:
+      GITHUB_PAT:
         description: "token which belongs to a user that can approve and merge pr's"
         required: true
 
@@ -57,13 +57,13 @@ jobs:
         run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
 
       - name: Wait for Status Checks
         run: gh pr checks -i 20 --watch --required "${PR_URL}"
         env:
           PR_URL:  ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
       - name: Enable auto-merge for Dependabot PRs
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
@@ -71,7 +71,7 @@ jobs:
         id: auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.DEPENDABOT_MERGE_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
       - name: Move tag to current commit
         if: ${{ inputs.auto-update-tag == 'true' && (steps.metadata.outputs.update-type
           == 'version-update:semver-minor' || steps.metadata.outputs.update-type
