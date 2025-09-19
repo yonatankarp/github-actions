@@ -1,0 +1,45 @@
+---
+name: Gradle wrapper auto-merge
+on:
+  workflow_call:
+    secrets:
+      GRADLE_WRAPPER_MERGE_TOKEN:
+        description: "token which belongs to a user that can approve and merge pr's"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# The latest build tags the produced image with `latest` (or `pr-N` for PRs) tag. Concurrent builds can potentially cause
+# inconsistency, e.g., when an older build finishes after the latest build. Currently, such inconsistency is still
+# possible when an older build is replayed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  gradle:
+    runs-on: ubuntu-latest
+    if: >
+      startsWith(github.head_ref, 'gradlew-update-') && 
+      github.event.pull_request.user.login == 'yonatankarp' &&
+      !github.event.pull_request.draft
+    steps:
+      - name: Approval for Gradle Wrapper PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GRADLE_WRAPPER_MERGE_TOKEN }}
+
+      - name: Wait for Status Checks
+        run: gh pr checks -i 20 --watch --required "${PR_URL}"
+        env:
+          PR_URL:  ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GRADLE_WRAPPER_MERGE_TOKEN }}
+          
+      - name: Enable auto-merge for Gradle Wrapper PRs
+        run: gh pr merge --admin --rebase "$PR_URL"
+        id: auto-merge
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GRADLE_WRAPPER_MERGE_TOKEN }}
