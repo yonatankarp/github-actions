@@ -56,16 +56,6 @@ jobs:
     secrets:
       GITHUB_PAT: ${{ secrets.CI_PAT }}
 
-  gradle_wrapper_auto_merge:
-    needs: pipeline
-    name: "[Test] Gradle Wrapper Auto-Merge"
-    uses: ./.github/workflows/gradle-wrapper-auto-merge.yml
-    permissions:
-        contents: write
-        pull-requests: write
-    secrets:
-        GRADLE_WRAPPER_MERGE_TOKEN: ${{ secrets.CI_PAT }}
-
   linters:
     uses: ./.github/workflows/linters.yml
 
