@@ -72,4 +72,4 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: devops-actions/actionlint@v0.1.9
+      - uses: devops-actions/actionlint@v0.1.10
