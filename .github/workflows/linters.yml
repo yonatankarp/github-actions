@@ -20,14 +20,14 @@ jobs:
     steps:
       - name: Git Checkout
         if: github.actor != 'dependabot[bot]'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR
         if: github.actor == 'dependabot[bot]'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           submodules: 'recursive'
