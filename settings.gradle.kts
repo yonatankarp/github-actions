@@ -1,6 +1,6 @@
 rootProject.name = "github-actions"
 
-include(
-    "dummy-app",
-    "Yet-Another-Dummy-App",
-)
+include("skeletons:spring", "skeletons:ktor")
+
+project(":skeletons:spring").projectDir = file("skeletons/spring")
+project(":skeletons:ktor").projectDir = file("skeletons/ktor")

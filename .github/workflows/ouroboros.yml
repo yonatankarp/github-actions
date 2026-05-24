@@ -12,40 +12,29 @@ permissions:
   contents: write
 
 jobs:
-  pipeline:
+  pipeline_spring:
+    name: "[ test ] pipeline - spring skeleton"
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: dummy-app
+      app_name: spring-skeleton
+      dockerfile_path: skeletons/spring/Dockerfile
 
-  pipeline_dockerfile_test:
-    name: "[ test ] pipeline - dockerfile on project root directory"
+  pipeline_ktor_uppercase:
+    name: "[ test ] pipeline - ktor skeleton (uppercase image name sanitization)"
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: dummy-app
-      dockerfile_path: "./Dockerfile"
+      app_name: KTOR-SKELETON
+      dockerfile_path: skeletons/ktor/Dockerfile
 
-  pipeline_docker_image_name_uppoercase:
-    name: "[ test ] pipeline - docker image name contains mixture of upper and lower letters"
+  pipeline_no_docker:
+    name: "[ test ] pipeline - skip docker build"
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: Yet-Another-Dummy-App
-
-  pipeline_gradle_build_root:
-    name: "[ test ] pipeline - gradle build on project root directory"
-    uses: ./.github/workflows/ci.yml
-    with:
-      app_name: dummy-app
-      context: "."
-
-  pipeline_gradle_build_submodule:
-    name: "[ test ] pipeline - gradle build on project submodule directory"
-    uses: ./.github/workflows/ci.yml
-    with:
-      app_name: dummy-app
-      context: dummy-app
+      app_name: spring-skeleton
+      build_dockerfile: false
 
   dependabot_auto_merge:
-    needs: pipeline
+    needs: pipeline_spring
     if: ${{ github.actor == 'dependabot[bot]' }}
     uses: ./.github/workflows/dependabot-auto-merge.yml
     permissions:
