@@ -67,7 +67,6 @@ jobs:
       - uses: devops-actions/actionlint@v0.1.12
 
   all-green:
-    name: All checks passed
     needs:
       - pipeline
       - linters
