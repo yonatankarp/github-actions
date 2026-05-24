@@ -12,29 +12,32 @@ permissions:
   contents: write
 
 jobs:
-  pipeline_spring:
-    name: "[ test ] pipeline - spring skeleton"
+  pipeline:
+    name: "[ test ] pipeline"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variant: spring-skeleton
+            app_name: spring-skeleton
+            dockerfile_path: skeletons/spring/Dockerfile
+            build_dockerfile: true
+          - variant: ktor-skeleton-uppercase
+            app_name: KTOR-SKELETON
+            dockerfile_path: skeletons/ktor/Dockerfile
+            build_dockerfile: true
+          - variant: spring-skeleton-no-docker
+            app_name: spring-skeleton
+            dockerfile_path: ""
+            build_dockerfile: false
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: spring-skeleton
-      dockerfile_path: skeletons/spring/Dockerfile
-
-  pipeline_ktor_uppercase:
-    name: "[ test ] pipeline - ktor skeleton (uppercase image name sanitization)"
-    uses: ./.github/workflows/ci.yml
-    with:
-      app_name: KTOR-SKELETON
-      dockerfile_path: skeletons/ktor/Dockerfile
-
-  pipeline_no_docker:
-    name: "[ test ] pipeline - skip docker build"
-    uses: ./.github/workflows/ci.yml
-    with:
-      app_name: spring-skeleton
-      build_dockerfile: false
+      app_name: ${{ matrix.app_name }}
+      dockerfile_path: ${{ matrix.dockerfile_path }}
+      build_dockerfile: ${{ matrix.build_dockerfile }}
 
   dependabot_auto_merge:
-    needs: pipeline_spring
+    needs: pipeline
     if: ${{ github.actor == 'dependabot[bot]' }}
     uses: ./.github/workflows/dependabot-auto-merge.yml
     permissions:
@@ -62,3 +65,17 @@ jobs:
       - uses: actions/checkout@v6
 
       - uses: devops-actions/actionlint@v0.1.12
+
+  all-green:
+    name: All checks passed
+    needs:
+      - pipeline
+      - linters
+      - update-gradle-wrapper
+      - actions-linter
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
