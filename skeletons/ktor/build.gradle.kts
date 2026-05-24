@@ -1,0 +1,34 @@
+plugins {
+    kotlin("jvm") version "2.3.21"
+    id("io.ktor.plugin") version "3.5.0"
+}
+
+kotlin {
+    jvmToolchain(25)
+}
+
+repositories {
+    mavenCentral()
+}
+
+application {
+    mainClass.set("com.yonatankarp.skeleton.ktor.ApplicationKt")
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("ktor-skeleton.jar")
+    }
+}
+
+dependencies {
+    implementation("io.ktor:ktor-server-core")
+    implementation("io.ktor:ktor-server-netty")
+    implementation("ch.qos.logback:logback-classic:1.5.32")
+    testImplementation("io.ktor:ktor-server-test-host")
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
