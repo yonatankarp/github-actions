@@ -20,6 +20,8 @@ runs:
       with:
         filters: |
           source_code:
+            - '.github/workflows/**'
+            - '.github/actions/**'
             - '**/src/**'
             - '**/build.gradle.kts'
             - 'gradle/libs.versions.toml'
