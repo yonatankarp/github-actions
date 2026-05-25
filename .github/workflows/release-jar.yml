@@ -25,7 +25,7 @@ jobs:
     steps:
 
       - name: Build JAR artifact
-        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@main
+        uses: yonatankarp/github-actions/.github/actions/build-jar-artifact@v2
         with:
           module-name: ${{ inputs.module-name }}
           tag: ${{ inputs.tag }}

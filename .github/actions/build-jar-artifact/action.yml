@@ -13,38 +13,46 @@ inputs:
     description: 'GitHub token for submodule checkout'
     required: true
   jvm-version:
-    description: 'Java version to use'
+    description: 'JDK version to install (e.g., 21, 25).'
     required: false
-    default: '21'
+    default: '25'
+  jvm-distribution:
+    description: 'JDK distribution passed to actions/setup-java.'
+    required: false
+    default: 'temurin'
 
 runs:
   using: 'composite'
   steps:
 
     - name: Checkout Code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         submodules: 'recursive'
         token: ${{ inputs.github-token }}
 
-    - name: Install Java
+    - name: Install JDK ${{ inputs.jvm-version }} (${{ inputs.jvm-distribution }})
       uses: actions/setup-java@v5
       with:
         java-version: ${{ inputs.jvm-version }}
-        distribution: 'temurin'
+        distribution: ${{ inputs.jvm-distribution }}
         cache: gradle
 
     - name: Set Artifact Version
       shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
       run: |
-        echo "Artifact version: ${{ inputs.tag }}"
-        echo "version=${{ inputs.tag }}" > gradle.properties
+        echo "Artifact version: $TAG"
+        echo "version=$TAG" > gradle.properties
 
     - name: Gradle Build
       shell: bash
+      env:
+        MODULE: ${{ inputs.module-name }}
       run: |
-        if [ -z "${{ inputs.module-name }}" ]; then
+        if [[ -z "$MODULE" ]]; then
           ./gradlew build
         else
-          ./gradlew :${{ inputs.module-name }}:build
+          ./gradlew ":${MODULE}:build"
         fi
