@@ -5,33 +5,60 @@ on:
       check_docs:
         type: boolean
         required: false
-        description: Whether or not to lint all markdown files in the project
+        description: Lint all markdown files in the project.
         default: true
       check_style:
         type: boolean
         required: false
-        description: Whether or not to run spotless
+        description: Run spotlessCheck.
         default: true
+      jvm-version:
+        type: string
+        required: false
+        description: JDK version used to run spotlessCheck.
+        default: '25'
+      jvm-distribution:
+        type: string
+        required: false
+        description: JDK distribution passed to actions/setup-java.
+        default: 'temurin'
+      markdown-lint-config:
+        type: string
+        required: false
+        description: Path to a markdown-lint rules.json. Empty uses the bundled default from github-actions/config/markdown-lint/rules.json.
+        default: ''
 
 jobs:
   linters:
-    name: Linters
     runs-on: ubuntu-latest
     steps:
-      - name: Git Checkout
-        if: github.actor != 'dependabot[bot]'
+      - name: Checkout Repository
+        if: ${{ github.actor != 'dependabot[bot]' }}
         uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout PR
-        if: github.actor == 'dependabot[bot]'
+        if: ${{ github.actor == 'dependabot[bot]' }}
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Composite Actions
+        uses: actions/checkout@v6
+        with:
+          repository: yonatankarp/github-actions
+          ref: ${{ github.workflow_sha }}
+          path: composite-actions
+          clean: false
+
+      - uses: ./composite-actions/.github/actions/prepare-jvm-build
+        with:
+          jvm-version: ${{ inputs.jvm-version }}
+          jvm-distribution: ${{ inputs.jvm-distribution }}
 
       - name: Check for Changes
         uses: dorny/paths-filter@v4.0.1
@@ -46,16 +73,24 @@ jobs:
               - README.md
               - 'docs/**'
 
+      - name: Resolve markdown-lint config
+        id: md-config
+        env:
+          OVERRIDE: ${{ inputs.markdown-lint-config }}
+        run: |
+          if [[ -n "$OVERRIDE" ]]; then
+            echo "path=$OVERRIDE" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=./composite-actions/config/markdown-lint/rules.json" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Lint Documents
-        if: inputs.check_docs && steps.changes.outputs.docs == 'true'
+        if: ${{ inputs.check_docs && steps.changes.outputs.docs == 'true' }}
         uses: avto-dev/markdown-lint@v1
-        continue-on-error: true
         with:
-          config: './config/markdown-lint/rules.json'
+          config: ${{ steps.md-config.outputs.path }}
           args: '**/*.md'
 
       - name: Check Style
-        if: inputs.check_style && steps.changes.outputs.source_code == 'true'
-        id: spotless
-        continue-on-error: true
+        if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' }}
         run: ./gradlew spotlessCheck

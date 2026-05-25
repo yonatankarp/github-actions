@@ -1,92 +1,85 @@
 name: build
+
 on:
   workflow_call:
     inputs:
-      app_name:
+      jvm-version:
         type: string
         required: false
-        description: the application name
-        default: ${{ github.event.repository.name }}
-      context:
+        default: '25'
+        description: 'JDK version to install (e.g., 21, 25).'
+      jvm-distribution:
         type: string
         required: false
-        description: the context in which CI should look for the code
+        default: 'temurin'
+        description: 'JDK distribution passed to actions/setup-java.'
+      gradle-module:
+        type: string
+        required: false
+        default: ''
+        description: 'Gradle module to build (e.g. :app or :nested:module). Empty runs the root build task.'
+      dockerfile-path:
+        type: string
+        required: false
+        default: ''
+        description: 'Path to the Dockerfile relative to the repo root. Empty disables the docker build step.'
+      image-name:
+        type: string
+        required: false
         default: ${{ github.event.repository.name }}
-      build_dockerfile:
+        description: 'Docker image name. Sanitized to lowercase before tagging.'
+      publish-test-reports:
         type: boolean
         required: false
-        description: defines if docker build should be executed or not
         default: true
-      dockerfile_path:
+        description: 'Publish JUnit results as a check + upload test/coverage artifacts.'
+      submodules:
         type: string
         required: false
-        description: the location of the dockerfile related to this module
+        default: 'false'
+        description: 'submodules input forwarded to actions/checkout (false, true, recursive).'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      checks: write
     steps:
-      - name: Git Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v6
         with:
-          submodules: 'recursive'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          submodules: ${{ inputs.submodules }}
 
-      - name: Install Java
-        uses: actions/setup-java@v5
+      - name: Checkout Composite Actions
+        uses: actions/checkout@v6
         with:
-          java-version: 21
-          distribution: 'temurin'
-          # Instead of manually configure caching of gradle, use an action which
-          # is provided. Details here: https://github.com/actions/setup-java
-          cache: gradle
+          repository: yonatankarp/github-actions
+          ref: ${{ github.workflow_sha }}
+          path: composite-actions
+          clean: false
 
-      - name: Find Dockerfile Location
-        id: dockerfile
-        run: |
-          if [ -z "${{ inputs.dockerfile_path }}" ]; then
-            echo "location=${{ inputs.app_name }}/Dockerfile" >> "$GITHUB_OUTPUT"
-          else
-            echo "location=${{ inputs.dockerfile_path }}" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check for Changes
-        uses: dorny/paths-filter@v4.0.1
-        id: changes
+      - uses: ./composite-actions/.github/actions/prepare-jvm-build
         with:
-          filters: |
-            source_code:
-              - '.github/workflows/**'
-              - 'gradle/libs.versions.toml'
-              - '${{ inputs.context }}/src/**'
-              - '${{ steps.dockerfile.outputs.location }}'
-              - '${{ inputs.context }}/build.gradle.kts'
-              - 'build.gradle.kts'
-              - 'gradlew'
-              - 'gradlew.bat'
-              - 'settings.gradle.kts'
+          jvm-version: ${{ inputs.jvm-version }}
+          jvm-distribution: ${{ inputs.jvm-distribution }}
 
-      - name: Determine Gradle Build Command
-        id: gradle_build
-        run: |
-          if [ -f "${{ inputs.context }}/build.gradle.kts" ] && [ "${{ inputs.context }}" != "." ]; then 
-            echo "command=build :${{ inputs.context }}:build" >> "$GITHUB_OUTPUT"
-            echo "Build command: 'build :${{ inputs.context }}:build' for subproject: ${{ inputs.context }}"
-          else
-            echo "command=build" >> "$GITHUB_OUTPUT"
-            echo "Build command: 'build' for root project"
-          fi
+      - id: changes
+        uses: ./composite-actions/.github/actions/detect-source-changes
+        with:
+          dockerfile-path: ${{ inputs.dockerfile-path }}
 
-      - name: Gradle Test
-        if: steps.changes.outputs.source_code == 'true'
-        id: tests
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew ${{ steps.gradle_build.outputs.command }}
+      - if: steps.changes.outputs.source_code == 'true'
+        uses: ./composite-actions/.github/actions/gradle-build
+        with:
+          gradle-module: ${{ inputs.gradle-module }}
 
-      - name: Build Docker Image
-        if: inputs.build_dockerfile && steps.changes.outputs.source_code == 'true'
-        id: container
-        run: |
-          sanitized_app_name=$(echo "${{ inputs.app_name }}" | tr '[:upper:]' '[:lower:]')
-          docker build --file "${{ steps.dockerfile.outputs.location }}" --tag "${sanitized_app_name}:latest" .
+      - if: always() && inputs.publish-test-reports
+        uses: ./composite-actions/.github/actions/publish-test-reports
+
+      - if: inputs.dockerfile-path != '' && steps.changes.outputs.source_code == 'true'
+        uses: ./composite-actions/.github/actions/build-docker-image
+        with:
+          image-name: ${{ inputs.image-name }}
+          dockerfile-path: ${{ inputs.dockerfile-path }}

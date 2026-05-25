@@ -1,0 +1,30 @@
+name: 'Detect Source Changes'
+description: 'Runs dorny/paths-filter against the standard JVM source set plus an optional Dockerfile path.'
+
+inputs:
+  dockerfile-path:
+    description: 'Optional Dockerfile path to include in the source filter. Empty when no Docker build is configured.'
+    required: false
+    default: ''
+
+outputs:
+  source_code:
+    description: 'true when any path matched the source filter; false otherwise.'
+    value: ${{ steps.filter.outputs.source_code }}
+
+runs:
+  using: composite
+  steps:
+    - id: filter
+      uses: dorny/paths-filter@v4.0.1
+      with:
+        filters: |
+          source_code:
+            - '**/src/**'
+            - '**/build.gradle.kts'
+            - 'gradle/libs.versions.toml'
+            - 'gradle/wrapper/gradle-wrapper.properties'
+            - 'gradlew'
+            - 'gradlew.bat'
+            - 'settings.gradle.kts'
+            - '${{ inputs.dockerfile-path }}'
