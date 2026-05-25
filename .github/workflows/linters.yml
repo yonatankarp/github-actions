@@ -47,11 +47,17 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Resolve Composite Actions Ref
+        id: composite-ref
+        env:
+          WORKFLOW_REF: ${{ github.workflow_ref }}
+        run: echo "ref=${WORKFLOW_REF##*@}" >> "$GITHUB_OUTPUT"
+
       - name: Checkout Composite Actions
         uses: actions/checkout@v6
         with:
           repository: yonatankarp/github-actions
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ steps.composite-ref.outputs.ref }}
           path: composite-actions
           clean: false
 
