@@ -4,6 +4,8 @@ Reusable workflow that builds a multi-arch Docker image and pushes it to GitHub 
 
 Mirrors the shape of [`release-jar.yml`](./release-jar.yml) — the caller wires up its own trigger (typically on release/tag).
 
+Internally delegates to the [`publish-docker-image`](../actions/publish-docker-image) composite action, which is registry-agnostic and shared with the upcoming Docker Hub release workflow.
+
 ## Inputs
 
 | Name            | Required | Default                     | Description                                                                                  |
