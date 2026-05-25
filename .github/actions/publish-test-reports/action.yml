@@ -10,6 +10,10 @@ inputs:
     description: 'Name of the uploaded artifact bundle.'
     required: false
     default: 'test-reports'
+  check-name:
+    description: 'Name of the GitHub Check that displays the test results. Pass a unique value per matrix variant to avoid clobbering.'
+    required: false
+    default: 'Test Results'
 
 runs:
   using: composite
@@ -19,6 +23,7 @@ runs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         junit_files: ${{ inputs.junit-pattern }}
+        check_name: ${{ inputs.check-name }}
 
     - name: Upload test and coverage reports
       if: always()
