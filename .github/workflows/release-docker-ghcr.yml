@@ -1,0 +1,58 @@
+name: Release Docker Image to GHCR
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description: the tag of this release (e.g. for SemVer `1.2.3`)
+      image-name:
+        type: string
+        required: false
+        default: ${{ github.repository }}
+        description: |
+          image name without registry, defaults to <owner>/<repo>
+          (final image: ghcr.io/<image-name>)
+      dockerfile:
+        type: string
+        required: false
+        default: ./Dockerfile
+        description: path to the Dockerfile
+      build-context:
+        type: string
+        required: false
+        default: .
+        description: docker build context
+      platforms:
+        type: string
+        required: false
+        default: linux/amd64,linux/arm64
+        description: target platforms for buildx
+      latest:
+        type: boolean
+        required: false
+        default: true
+        description: also tag the image as `:latest`
+
+jobs:
+  image:
+    name: Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Publish to GHCR
+        uses: yonatankarp/github-actions/.github/actions/publish-docker-image@v2
+        with:
+          registry: ghcr.io
+          image-name: ${{ inputs.image-name }}
+          tag: ${{ inputs.tag }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          dockerfile: ${{ inputs.dockerfile }}
+          build-context: ${{ inputs.build-context }}
+          platforms: ${{ inputs.platforms }}
+          latest: ${{ inputs.latest }}
