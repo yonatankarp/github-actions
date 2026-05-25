@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   pipeline:
@@ -49,10 +49,8 @@ jobs:
     if: ${{ github.actor == 'dependabot[bot]' }}
     uses: ./.github/workflows/dependabot-auto-merge.yml
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
-    with:
-      auto-update-tag: true
     secrets:
       GITHUB_PAT: ${{ secrets.CI_PAT }}
 
