@@ -19,22 +19,26 @@ jobs:
       matrix:
         include:
           - variant: spring-skeleton
-            app_name: spring-skeleton
-            dockerfile_path: skeletons/spring/Dockerfile
-            build_dockerfile: true
+            image-name: spring-skeleton
+            dockerfile-path: skeletons/spring/Dockerfile
+            gradle-module: ''
           - variant: ktor-skeleton-uppercase
-            app_name: KTOR-SKELETON
-            dockerfile_path: skeletons/ktor/Dockerfile
-            build_dockerfile: true
+            image-name: KTOR-SKELETON
+            dockerfile-path: skeletons/ktor/Dockerfile
+            gradle-module: ''
           - variant: spring-skeleton-no-docker
-            app_name: spring-skeleton
-            dockerfile_path: ""
-            build_dockerfile: false
+            image-name: spring-skeleton
+            dockerfile-path: ''
+            gradle-module: ''
+          - variant: spring-skeleton-submodule
+            image-name: spring-skeleton
+            dockerfile-path: skeletons/spring/Dockerfile
+            gradle-module: ':skeletons:spring'
     uses: ./.github/workflows/ci.yml
     with:
-      app_name: ${{ matrix.app_name }}
-      dockerfile_path: ${{ matrix.dockerfile_path }}
-      build_dockerfile: ${{ matrix.build_dockerfile }}
+      image-name: ${{ matrix.image-name }}
+      dockerfile-path: ${{ matrix.dockerfile-path }}
+      gradle-module: ${{ matrix.gradle-module }}
 
   dependabot_auto_merge:
     needs: pipeline

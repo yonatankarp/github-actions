@@ -1,0 +1,27 @@
+name: 'Build Docker Image'
+description: 'Sanitizes the image name to lowercase and runs docker build against the supplied Dockerfile.'
+
+inputs:
+  image-name:
+    description: 'Docker image name. Sanitized to lowercase for Docker compatibility.'
+    required: true
+  dockerfile-path:
+    description: 'Path to the Dockerfile relative to build-context.'
+    required: true
+  build-context:
+    description: 'Docker build context directory.'
+    required: false
+    default: '.'
+
+runs:
+  using: composite
+  steps:
+    - name: Build Docker image
+      shell: bash
+      run: |
+        sanitized=$(echo "${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
+        docker build --file "${DOCKERFILE}" --tag "${sanitized}:latest" "${CONTEXT}"
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        DOCKERFILE: ${{ inputs.dockerfile-path }}
+        CONTEXT: ${{ inputs.build-context }}

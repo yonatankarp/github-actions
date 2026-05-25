@@ -1,0 +1,22 @@
+name: 'Gradle Build'
+description: 'Runs ./gradlew build, optionally scoped to a single module path (e.g. :app or :nested:module).'
+
+inputs:
+  gradle-module:
+    description: 'Gradle module to build (e.g. :app). Empty runs the root build task.'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Gradle build
+      shell: bash
+      run: |
+        if [[ -z "${MODULE}" ]]; then
+          ./gradlew build
+        else
+          ./gradlew "${MODULE}:build"
+        fi
+      env:
+        MODULE: ${{ inputs.gradle-module }}

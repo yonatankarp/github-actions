@@ -5,18 +5,17 @@ on:
     inputs:
       auto-update-tag:
         type: boolean
-        description: Indicates whether or not to run the inputs {{ tagging-script-path
-          }} to update the tag of the repository after a successful merge
+        description: Whether to run the tagging-script-path script to move the repository tag after a successful merge.
         default: false
         required: false
       tagging-script-path:
         type: string
-        description: the path to the script to execute to tag the repository
+        description: Path to the tagging script to execute after a successful merge.
         required: false
         default: ./bin/replace-tags.sh
     secrets:
       GITHUB_PAT:
-        description: "token which belongs to a user that can approve and merge pr's"
+        description: "Token that can approve and merge pull requests."
         required: true
 
 permissions:
@@ -34,44 +33,48 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     env:
-      TAG_VERSION: v1
+      TAG_VERSION: v2
     steps:
       - name: Dependabot Checkout
-        if: ${{ inputs.auto-update-tag  == true }}
+        if: ${{ inputs.auto-update-tag == true }}
         uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # If the PR is created by Dependabot, run additional steps
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Approval for Dependabot PR
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
           steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
-        run: gh pr review --approve "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: gh pr review --approve "$PR_URL"
 
       - name: Wait for Status Checks
-        run: gh pr checks -i 20 --watch --required "${PR_URL}"
-        env:
-          PR_URL:  ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
-      - name: Enable auto-merge for Dependabot PRs
-        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
-        run: gh pr merge --admin --rebase "$PR_URL"
-        id: auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: gh pr checks -i 20 --watch --required "$PR_URL"
+
+      - name: Enable auto-merge for Dependabot PRs
+        id: auto-merge
+        if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' }}
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
+        run: gh pr merge --admin --rebase "$PR_URL"
+
       - name: Move tag to current commit
-        if: ${{ inputs.auto-update-tag == 'true' && (steps.metadata.outputs.update-type
+        if: ${{ inputs.auto-update-tag == true && (steps.metadata.outputs.update-type
           == 'version-update:semver-minor' || steps.metadata.outputs.update-type
           == 'version-update:semver-patch') }}
-        run: sh ${{ inputs.tagging-script-path }} ${{ env.TAG_VERSION }}
+        env:
+          TAGGING_SCRIPT: ${{ inputs.tagging-script-path }}
+        run: sh "$TAGGING_SCRIPT" "$TAG_VERSION"

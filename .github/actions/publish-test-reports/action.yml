@@ -1,0 +1,31 @@
+name: 'Publish Test Reports'
+description: 'Publishes JUnit results as a check + uploads HTML test and JaCoCo coverage reports as workflow artifacts. Caller must grant pull-requests:write and checks:write permissions.'
+
+inputs:
+  junit-pattern:
+    description: 'Glob for JUnit XML files.'
+    required: false
+    default: '**/build/test-results/test/TEST-*.xml'
+  artifact-name:
+    description: 'Name of the uploaded artifact bundle.'
+    required: false
+    default: 'test-reports'
+
+runs:
+  using: composite
+  steps:
+    - name: Publish unit test results
+      if: always()
+      uses: EnricoMi/publish-unit-test-result-action@v2
+      with:
+        junit_files: ${{ inputs.junit-pattern }}
+
+    - name: Upload test and coverage reports
+      if: always()
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: |
+          **/build/reports/tests/**/*
+          **/build/reports/jacoco/test/**/*
+        if-no-files-found: ignore

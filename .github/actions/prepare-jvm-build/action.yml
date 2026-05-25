@@ -1,0 +1,29 @@
+name: 'Prepare JVM Build'
+description: 'Validates the Gradle wrapper, installs the requested JDK, and sets up Gradle with shared caching. Assumes the consumer repository is already checked out at the workspace root.'
+
+inputs:
+  jvm-version:
+    description: 'JDK version to install (e.g., 21, 25).'
+    required: false
+    default: '25'
+  jvm-distribution:
+    description: 'JDK distribution passed to actions/setup-java (e.g., temurin, zulu, microsoft, corretto, semeru, graalvm).'
+    required: false
+    default: 'temurin'
+
+runs:
+  using: composite
+  steps:
+    - name: Validate Gradle wrapper
+      uses: gradle/actions/wrapper-validation@v6
+
+    - name: Install JDK ${{ inputs.jvm-version }} (${{ inputs.jvm-distribution }})
+      uses: actions/setup-java@v5
+      with:
+        java-version: ${{ inputs.jvm-version }}
+        distribution: ${{ inputs.jvm-distribution }}
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v6
+      with:
+        cache-read-only: ${{ github.ref != 'refs/heads/main' }}
