@@ -1,0 +1,25 @@
+name: Move v2 tag to main HEAD
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: move-major-tag
+  cancel-in-progress: true
+
+jobs:
+  move:
+    name: Move v2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main with tags
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+
+      - name: Move v2 to current HEAD
+        run: ./bin/replace-tags.sh v2
