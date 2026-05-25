@@ -69,6 +69,9 @@ jobs:
 
       - if: always() && inputs.publish-test-reports
         uses: yonatankarp/github-actions/.github/actions/publish-test-reports@v2
+        with:
+          check-name: Test Results (${{ inputs.image-name }})
+          artifact-name: test-reports-${{ inputs.image-name }}
 
       - if: inputs.dockerfile-path != '' && steps.changes.outputs.source_code == 'true'
         uses: yonatankarp/github-actions/.github/actions/build-docker-image@v2
