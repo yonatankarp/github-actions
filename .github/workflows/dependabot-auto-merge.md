@@ -1,6 +1,6 @@
 # `dependabot-auto-merge.yml`
 
-Reusable workflow that auto-approves and auto-merges Dependabot PRs for **semver-minor and semver-patch** updates, optionally moving a floating major tag (e.g. `v2`) to the post-merge SHA.
+Reusable workflow that auto-approves and auto-merges Dependabot PRs for **semver-minor and semver-patch** updates.
 
 Behavior:
 
@@ -8,18 +8,16 @@ Behavior:
 2. Approve the PR (only for minor/patch updates).
 3. Wait for all required status checks to pass.
 4. `gh pr merge --admin --rebase`.
-5. _(optional)_ Run the tagging script to move `v2` to the new merge commit.
 
 **Major-version bumps are intentionally _not_ auto-merged** — they need a human eye.
 
 The `if: github.actor == 'dependabot[bot]'` guard means this job is a no-op on non-Dependabot PRs; safe to wire into a generic CI pipeline (see [`ouroboros.yml`](./ouroboros.md) for the in-repo example).
 
+Floating-tag moves (e.g. advancing `v2` after a merge) are handled separately by [`move-major-tag.yml`](./move-major-tag.md), which runs on every push to `main` regardless of author.
+
 ## Inputs
 
-| Name                  | Required | Default                  | Description                                                                                  |
-|-----------------------|----------|--------------------------|----------------------------------------------------------------------------------------------|
-| `auto-update-tag`     | no       | `false`                  | When `true`, run `tagging-script-path` after a successful merge to move `v2` to the new SHA. |
-| `tagging-script-path` | no       | `./bin/replace-tags.sh`  | Path to the tagging script inside the consumer repo.                                         |
+None.
 
 ## Secrets
 
@@ -31,11 +29,11 @@ The `if: github.actor == 'dependabot[bot]'` guard means this job is a no-op on n
 
 ```yaml
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 ```
 
-`contents: write` is needed for the tag-moving step. `pull-requests: write` lets `gh` operate on the PR.
+`pull-requests: write` lets `gh` operate on the PR via the PAT.
 
 ## Usage
 
@@ -46,18 +44,11 @@ jobs:
   dependabot:
     if: ${{ github.actor == 'dependabot[bot]' }}
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v2
     secrets:
       GITHUB_PAT: ${{ secrets.CI_PAT }}
-```
-
-With floating-tag updates enabled (used by the workflows-repo itself to keep `v2` current):
-
-```yaml
-    with:
-      auto-update-tag: true
 ```
 
 ## Notes

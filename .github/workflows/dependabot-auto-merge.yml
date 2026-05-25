@@ -2,29 +2,15 @@
 name: Dependabot auto-merge
 on:
   workflow_call:
-    inputs:
-      auto-update-tag:
-        type: boolean
-        description: Whether to run the tagging-script-path script to move the repository tag after a successful merge.
-        default: false
-        required: false
-      tagging-script-path:
-        type: string
-        description: Path to the tagging script to execute after a successful merge.
-        required: false
-        default: ./bin/replace-tags.sh
     secrets:
       GITHUB_PAT:
         description: "Token that can approve and merge pull requests."
         required: true
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
-# The latest build tags the produced image with `latest` (or `pr-N` for PRs) tag. Concurrent builds can potentially cause
-# inconsistency, e.g., when an older build finishes after the latest build. Currently, such inconsistency is still
-# possible when an older build is replayed.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 
@@ -32,16 +18,7 @@ jobs:
   dependabot:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
-    env:
-      TAG_VERSION: v2
     steps:
-      - name: Dependabot Checkout
-        if: ${{ inputs.auto-update-tag == true }}
-        uses: actions/checkout@v6
-        with:
-          submodules: 'recursive'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Fetch Dependabot metadata
         id: metadata
         uses: dependabot/fetch-metadata@v3
@@ -70,11 +47,3 @@ jobs:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_PAT }}
         run: gh pr merge --admin --rebase "$PR_URL"
-
-      - name: Move tag to current commit
-        if: ${{ inputs.auto-update-tag == true && (steps.metadata.outputs.update-type
-          == 'version-update:semver-minor' || steps.metadata.outputs.update-type
-          == 'version-update:semver-patch') }}
-        env:
-          TAGGING_SCRIPT: ${{ inputs.tagging-script-path }}
-        run: sh "$TAGGING_SCRIPT" "$TAG_VERSION"

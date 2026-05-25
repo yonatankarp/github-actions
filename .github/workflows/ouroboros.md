@@ -25,7 +25,7 @@ Triggered on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_rev
 
 ## Permissions
 
-Top-level grants `contents: write` (needed by `dependabot_auto_merge` for tag-moving). Each job tightens the scope further as needed.
+Top-level grants `contents: read`. Each job further declares its own scopes (e.g. `pull-requests: write`, `checks: write`) as needed.
 
 ## Secrets used
 
