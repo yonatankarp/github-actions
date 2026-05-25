@@ -52,40 +52,26 @@ jobs:
         with:
           submodules: ${{ inputs.submodules }}
 
-      - name: Resolve Composite Actions Ref
-        id: composite-ref
-        env:
-          WORKFLOW_REF: ${{ github.workflow_ref }}
-        run: echo "ref=${WORKFLOW_REF##*@}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout Composite Actions
-        uses: actions/checkout@v6
-        with:
-          repository: yonatankarp/github-actions
-          ref: ${{ steps.composite-ref.outputs.ref }}
-          path: composite-actions
-          clean: false
-
-      - uses: ./composite-actions/.github/actions/prepare-jvm-build
+      - uses: yonatankarp/github-actions/.github/actions/prepare-jvm-build@v2
         with:
           jvm-version: ${{ inputs.jvm-version }}
           jvm-distribution: ${{ inputs.jvm-distribution }}
 
       - id: changes
-        uses: ./composite-actions/.github/actions/detect-source-changes
+        uses: yonatankarp/github-actions/.github/actions/detect-source-changes@v2
         with:
           dockerfile-path: ${{ inputs.dockerfile-path }}
 
       - if: steps.changes.outputs.source_code == 'true'
-        uses: ./composite-actions/.github/actions/gradle-build
+        uses: yonatankarp/github-actions/.github/actions/gradle-build@v2
         with:
           gradle-module: ${{ inputs.gradle-module }}
 
       - if: always() && inputs.publish-test-reports
-        uses: ./composite-actions/.github/actions/publish-test-reports
+        uses: yonatankarp/github-actions/.github/actions/publish-test-reports@v2
 
       - if: inputs.dockerfile-path != '' && steps.changes.outputs.source_code == 'true'
-        uses: ./composite-actions/.github/actions/build-docker-image
+        uses: yonatankarp/github-actions/.github/actions/build-docker-image@v2
         with:
           image-name: ${{ inputs.image-name }}
           dockerfile-path: ${{ inputs.dockerfile-path }}

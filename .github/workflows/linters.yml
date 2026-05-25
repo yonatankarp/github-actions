@@ -47,21 +47,7 @@ jobs:
           submodules: 'recursive'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve Composite Actions Ref
-        id: composite-ref
-        env:
-          WORKFLOW_REF: ${{ github.workflow_ref }}
-        run: echo "ref=${WORKFLOW_REF##*@}" >> "$GITHUB_OUTPUT"
-
-      - name: Checkout Composite Actions
-        uses: actions/checkout@v6
-        with:
-          repository: yonatankarp/github-actions
-          ref: ${{ steps.composite-ref.outputs.ref }}
-          path: composite-actions
-          clean: false
-
-      - uses: ./composite-actions/.github/actions/prepare-jvm-build
+      - uses: yonatankarp/github-actions/.github/actions/prepare-jvm-build@v2
         with:
           jvm-version: ${{ inputs.jvm-version }}
           jvm-distribution: ${{ inputs.jvm-distribution }}
@@ -87,7 +73,8 @@ jobs:
           if [[ -n "$OVERRIDE" ]]; then
             echo "path=$OVERRIDE" >> "$GITHUB_OUTPUT"
           else
-            echo "path=./composite-actions/config/markdown-lint/rules.json" >> "$GITHUB_OUTPUT"
+            curl -fsSL https://raw.githubusercontent.com/yonatankarp/github-actions/v2/config/markdown-lint/rules.json -o /tmp/markdown-lint-rules.json
+            echo "path=/tmp/markdown-lint-rules.json" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Lint Documents
