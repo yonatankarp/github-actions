@@ -27,4 +27,4 @@ runs:
             - 'gradlew'
             - 'gradlew.bat'
             - 'settings.gradle.kts'
-            - '${{ inputs.dockerfile-path }}'
+            - '${{ inputs.dockerfile-path || '__none__' }}'
