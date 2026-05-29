@@ -84,6 +84,22 @@ jobs:
           config: ${{ steps.md-config.outputs.path }}
           args: '**/*.md'
 
-      - name: Check Style
+      - name: Check for spotlessCheck task
         if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' }}
+        id: spotless
+        shell: bash
+        run: |
+          if [[ ! -x ./gradlew ]]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ./gradlew tasks --all --console=plain | grep -q '^spotlessCheck '; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check Style
+        if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' && steps.spotless.outputs.available == 'true' }}
         run: ./gradlew spotlessCheck
