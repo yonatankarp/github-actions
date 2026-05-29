@@ -27,6 +27,11 @@ on:
         required: false
         description: Path to a markdown-lint rules.json. Empty uses the bundled default from github-actions/config/markdown-lint/rules.json.
         default: ''
+      spotless-gradle-init:
+        type: string
+        required: false
+        description: Path to a Spotless Gradle init script. Empty uses the bundled default from github-actions/config/spotless/spotless.gradle.kts.
+        default: ''
 
 jobs:
   linters:
@@ -77,6 +82,18 @@ jobs:
             echo "path=/tmp/markdown-lint-rules.json" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Resolve Spotless Gradle init script
+        id: spotless-config
+        env:
+          OVERRIDE: ${{ inputs.spotless-gradle-init }}
+        run: |
+          if [[ -n "$OVERRIDE" ]]; then
+            echo "path=$OVERRIDE" >> "$GITHUB_OUTPUT"
+          else
+            curl -fsSL https://raw.githubusercontent.com/yonatankarp/github-actions/v2/config/spotless/spotless.gradle.kts -o /tmp/spotless.gradle.kts
+            echo "path=/tmp/spotless.gradle.kts" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Lint Documents
         if: ${{ inputs.check_docs && steps.changes.outputs.docs == 'true' }}
         uses: avto-dev/markdown-lint@v1
@@ -84,22 +101,6 @@ jobs:
           config: ${{ steps.md-config.outputs.path }}
           args: '**/*.md'
 
-      - name: Check for spotlessCheck task
-        if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' }}
-        id: spotless
-        shell: bash
-        run: |
-          if [[ ! -x ./gradlew ]]; then
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if ./gradlew tasks --all --console=plain | grep -q '^spotlessCheck '; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Check Style
-        if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' && steps.spotless.outputs.available == 'true' }}
-        run: ./gradlew spotlessCheck
+        if: ${{ inputs.check_style && steps.changes.outputs.source_code == 'true' }}
+        run: ./gradlew --init-script "${{ steps.spotless-config.outputs.path }}" spotlessCheck
