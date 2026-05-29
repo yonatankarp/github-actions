@@ -33,12 +33,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_PAT }}
         run: gh pr review --approve "$PR_URL"
 
-      - name: Wait for Status Checks
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_PAT }}
-        run: gh pr checks -i 20 --watch --required "$PR_URL"
-
       - name: Enable auto-merge for Dependabot PRs
         id: auto-merge
         if: ${{ steps.metadata.outputs.update-type == 'version-update:semver-minor' ||
