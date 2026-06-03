@@ -45,10 +45,6 @@ jobs:
       gradle-module: ${{ matrix.gradle_module }}
 
   dependabot_auto_merge:
-    needs:
-      - pipeline
-      - linters
-      - actions-linter
     if: ${{ github.actor == 'dependabot[bot]' }}
     uses: yonatankarp/github-actions/.github/workflows/dependabot-auto-merge.yml@v2
     permissions:

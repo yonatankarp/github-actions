@@ -40,4 +40,7 @@ jobs:
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_PAT }}
-        run: gh pr merge --admin --rebase "$PR_URL"
+        # --auto arms GitHub's native auto-merge, which merges once branch
+        # protection is satisfied. Fallback to a direct merge for PRs where
+        # auto-merge cannot be armed (no required checks -> already "clean").
+        run: gh pr merge --auto --rebase "$PR_URL" || gh pr merge --rebase "$PR_URL"
