@@ -24,7 +24,7 @@ ktor {
 dependencies {
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
-    implementation("ch.qos.logback:logback-classic:1.5.32")
+    implementation("ch.qos.logback:logback-classic:1.5.34")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test"))
 }
