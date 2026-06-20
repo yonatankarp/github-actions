@@ -85,15 +85,126 @@ jobs:
           check-name: Test Results (${{ inputs.image-name }})
           artifact-name: test-reports-${{ inputs.image-name }}
 
-      - name: Coverage comment
+      - name: Generate coverage summary
+        id: coverage
         if: >-
           inputs.coverage
           && github.event_name == 'pull_request'
           && github.event.pull_request.head.repo.full_name == github.repository
           && steps.changes.outputs.source_code == 'true'
-        uses: yonatankarp/github-actions/.github/actions/jvm-coverage@v2
+        shell: bash
+        env:
+          COVERAGE_XML: ${{ inputs.coverage-xml }}
+          COVERAGE_TITLE: Coverage
+          COVERAGE_MARKER: '<!-- jvm-coverage-summary -->'
+        run: |
+          python3 - <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
+
+          patterns = [
+              p.strip()
+              for p in os.environ["COVERAGE_XML"].replace(",", "\n").splitlines()
+              if p.strip()
+          ]
+          files = sorted({f for pat in patterns for f in glob.glob(pat, recursive=True)})
+
+          if not files:
+              print("::notice::No coverage XML matched; skipping the coverage comment.")
+              raise SystemExit(0)
+
+          title = os.environ["COVERAGE_TITLE"]
+          marker = os.environ["COVERAGE_MARKER"]
+
+          def percentage(covered, missed):
+              total = covered + missed
+              return "n/a" if total == 0 else f"{covered / total * 100:.2f}%"
+
+          def counters(root):
+              return {
+                  c.attrib["type"]: (int(c.attrib["covered"]), int(c.attrib["missed"]))
+                  for c in root.findall("counter")
+              }
+
+          rows = []
+          totals = {}
+          for path in files:
+              root = ET.parse(path).getroot()
+              name = root.attrib.get("name") or path
+              module = counters(root)
+              line = module.get("LINE", (0, 0))
+              branch = module.get("BRANCH", (0, 0))
+              rows.append(f"| {name} | {percentage(*line)} | {percentage(*branch)} |")
+              for counter_type, (covered, missed) in module.items():
+                  acc_covered, acc_missed = totals.get(counter_type, (0, 0))
+                  totals[counter_type] = (acc_covered + covered, acc_missed + missed)
+
+          total_line = totals.get("LINE", (0, 0))
+          total_branch = totals.get("BRANCH", (0, 0))
+          summary = "\n".join(
+              [
+                  marker,
+                  f"## {title}",
+                  "",
+                  f"**Total** — Lines {percentage(*total_line)} · "
+                  f"Branches {percentage(*total_branch)}",
+                  "",
+                  "| Module | Lines | Branches |",
+                  "| --- | ---: | ---: |",
+                  *rows,
+                  "",
+              ]
+          )
+          with open("jvm-coverage-summary.md", "w", encoding="utf-8") as handle:
+              handle.write(summary)
+          PY
+
+          if [[ -f jvm-coverage-summary.md ]]; then
+            echo "has_reports=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_reports=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment coverage on the pull request
+        if: ${{ steps.coverage.outputs.has_reports == 'true' }}
+        uses: actions/github-script@v9
+        env:
+          MARKER: '<!-- jvm-coverage-summary -->'
         with:
-          coverage-xml: ${{ inputs.coverage-xml }}
+          script: |
+            const fs = require('fs');
+            const marker = process.env.MARKER;
+            const body = fs.readFileSync('jvm-coverage-summary.md', 'utf8');
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) =>
+              ['github-actions', 'github-actions[bot]'].includes(comment.user?.login) &&
+              comment.body?.includes(marker)
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              });
+            }
 
       - if: inputs.dockerfile-path != '' && steps.changes.outputs.source_code == 'true'
         uses: yonatankarp/github-actions/.github/actions/build-docker-image@v2
