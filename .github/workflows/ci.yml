@@ -33,6 +33,16 @@ on:
         required: false
         default: true
         description: 'Publish JUnit results as a check + upload test/coverage artifacts.'
+      coverage:
+        type: boolean
+        required: false
+        default: false
+        description: 'Post a coverage comment on the pull request from JaCoCo-format XML reports (works with JaCoCo and Kover).'
+      coverage-xml:
+        type: string
+        required: false
+        default: '**/build/reports/jacoco/test/jacocoTestReport.xml'
+        description: 'Newline- or comma-separated glob(s) for JaCoCo-format coverage XML reports.'
       submodules:
         type: string
         required: false
@@ -74,6 +84,16 @@ jobs:
         with:
           check-name: Test Results (${{ inputs.image-name }})
           artifact-name: test-reports-${{ inputs.image-name }}
+
+      - name: Coverage comment
+        if: >-
+          inputs.coverage
+          && github.event_name == 'pull_request'
+          && github.event.pull_request.head.repo.full_name == github.repository
+          && steps.changes.outputs.source_code == 'true'
+        uses: yonatankarp/github-actions/.github/actions/jvm-coverage@v2
+        with:
+          coverage-xml: ${{ inputs.coverage-xml }}
 
       - if: inputs.dockerfile-path != '' && steps.changes.outputs.source_code == 'true'
         uses: yonatankarp/github-actions/.github/actions/build-docker-image@v2
