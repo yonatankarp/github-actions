@@ -43,6 +43,16 @@ on:
         required: false
         default: '**/build/reports/jacoco/test/jacocoTestReport.xml'
         description: 'Newline- or comma-separated glob(s) for JaCoCo-format coverage XML reports.'
+      coverage-line-target:
+        type: string
+        required: false
+        default: '80'
+        description: 'Line-coverage target (%) shown as a 🎯 next to the Line metric.'
+      coverage-branch-target:
+        type: string
+        required: false
+        default: '70'
+        description: 'Branch-coverage target (%) shown as a 🎯 next to the Branch metric.'
       submodules:
         type: string
         required: false
@@ -97,6 +107,8 @@ jobs:
           COVERAGE_XML: ${{ inputs.coverage-xml }}
           COVERAGE_TITLE: Coverage
           COVERAGE_MARKER: '<!-- jvm-coverage-summary -->'
+          COVERAGE_LINE_TARGET: ${{ inputs.coverage-line-target }}
+          COVERAGE_BRANCH_TARGET: ${{ inputs.coverage-branch-target }}
         run: |
           python3 - <<'PY'
           import glob
@@ -117,9 +129,21 @@ jobs:
           title = os.environ["COVERAGE_TITLE"]
           marker = os.environ["COVERAGE_MARKER"]
 
-          def percentage(covered, missed):
+          def ratio(covered, missed):
               total = covered + missed
-              return "n/a" if total == 0 else f"{covered / total * 100:.2f}%"
+              return None if total == 0 else covered / total * 100
+
+          def percentage(covered, missed):
+              r = ratio(covered, missed)
+              return "n/a" if r is None else f"{r:.2f}%"
+
+          # Same traffic light as the frontend coverage comment, so the colour
+          # means the same thing across languages: <80 red, 80-89 amber, >=90 green.
+          def status_icon(covered, missed):
+              r = ratio(covered, missed)
+              if r is None:
+                  return "⚪"
+              return "🔴" if r < 80 else "🟡" if r < 90 else "🟢"
 
           def counters(root):
               return {
@@ -127,7 +151,16 @@ jobs:
                   for c in root.findall("counter")
               }
 
+          targets = {
+              "LINE": os.environ.get("COVERAGE_LINE_TARGET", "").strip(),
+              "BRANCH": os.environ.get("COVERAGE_BRANCH_TARGET", "").strip(),
+          }
           metric_order = ["LINE", "BRANCH", "INSTRUCTION", "METHOD", "CLASS"]
+
+          def coverage_cell(counter_type, covered, missed):
+              cell = percentage(covered, missed)
+              target = targets.get(counter_type)
+              return f"{cell} (🎯 {target}%)" if target else cell
 
           sections = []
           totals = {}
@@ -139,7 +172,8 @@ jobs:
                   acc_covered, acc_missed = totals.get(counter_type, (0, 0))
                   totals[counter_type] = (acc_covered + covered, acc_missed + missed)
               metric_rows = [
-                  f"| {counter_type.title()} | {percentage(*module[counter_type])} "
+                  f"| {status_icon(*module[counter_type])} | {counter_type.title()} "
+                  f"| {coverage_cell(counter_type, *module[counter_type])} "
                   f"| {module[counter_type][0]} | {module[counter_type][1]} |"
                   for counter_type in metric_order
                   if counter_type in module
@@ -147,8 +181,8 @@ jobs:
               sections += [
                   f"### {name}",
                   "",
-                  "| Metric | Coverage | Covered | Missed |",
-                  "| --- | ---: | ---: | ---: |",
+                  "| Status | Metric | Coverage | Covered | Missed |",
+                  "| :---: | --- | ---: | ---: | ---: |",
                   *metric_rows,
                   "",
               ]
@@ -160,8 +194,8 @@ jobs:
                   marker,
                   f"## {title}",
                   "",
-                  f"**Total** — Lines {percentage(*total_line)} · "
-                  f"Branches {percentage(*total_branch)}",
+                  f"**Total** — {status_icon(*total_line)} Lines {percentage(*total_line)} "
+                  f"· {status_icon(*total_branch)} Branches {percentage(*total_branch)}",
                   "",
                   *sections,
               ]
