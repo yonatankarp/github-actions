@@ -36,8 +36,8 @@ on:
       coverage:
         type: boolean
         required: false
-        default: false
-        description: 'Post a coverage comment on the pull request from JaCoCo-format XML reports (works with JaCoCo and Kover).'
+        default: true
+        description: 'Post a coverage comment on the pull request from JaCoCo-format XML reports (works with JaCoCo and Kover). No-op when no reports match, so it is safe on by default; set false to disable entirely.'
       coverage-xml:
         type: string
         required: false
