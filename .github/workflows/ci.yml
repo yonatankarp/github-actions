@@ -127,18 +127,31 @@ jobs:
                   for c in root.findall("counter")
               }
 
-          rows = []
+          metric_order = ["LINE", "BRANCH", "INSTRUCTION", "METHOD", "CLASS"]
+
+          sections = []
           totals = {}
           for path in files:
               root = ET.parse(path).getroot()
               name = root.attrib.get("name") or path
               module = counters(root)
-              line = module.get("LINE", (0, 0))
-              branch = module.get("BRANCH", (0, 0))
-              rows.append(f"| {name} | {percentage(*line)} | {percentage(*branch)} |")
               for counter_type, (covered, missed) in module.items():
                   acc_covered, acc_missed = totals.get(counter_type, (0, 0))
                   totals[counter_type] = (acc_covered + covered, acc_missed + missed)
+              metric_rows = [
+                  f"| {counter_type.title()} | {percentage(*module[counter_type])} "
+                  f"| {module[counter_type][0]} | {module[counter_type][1]} |"
+                  for counter_type in metric_order
+                  if counter_type in module
+              ]
+              sections += [
+                  f"### {name}",
+                  "",
+                  "| Metric | Coverage | Covered | Missed |",
+                  "| --- | ---: | ---: | ---: |",
+                  *metric_rows,
+                  "",
+              ]
 
           total_line = totals.get("LINE", (0, 0))
           total_branch = totals.get("BRANCH", (0, 0))
@@ -150,10 +163,7 @@ jobs:
                   f"**Total** — Lines {percentage(*total_line)} · "
                   f"Branches {percentage(*total_branch)}",
                   "",
-                  "| Module | Lines | Branches |",
-                  "| --- | ---: | ---: |",
-                  *rows,
-                  "",
+                  *sections,
               ]
           )
           with open("jvm-coverage-summary.md", "w", encoding="utf-8") as handle:
