@@ -62,7 +62,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: devops-actions/actionlint@v0.1.12
 
