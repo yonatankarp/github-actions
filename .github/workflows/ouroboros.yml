@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: devops-actions/actionlint@v0.1.12
+      - uses: devops-actions/actionlint@v0.1.13
 
   all-green:
     needs:
