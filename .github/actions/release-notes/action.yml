@@ -1,0 +1,57 @@
+name: 'Release Notes'
+description: "Writes a version's release notes from the pull requests merged since the last v* tag, grouped by the kind in each title."
+
+inputs:
+  version:
+    description: 'The version, with or without its v (e.g. v0.8.0 or 0.8.0).'
+    required: true
+  ref:
+    description: 'The commit the notes end at. Empty means the v<version> tag; origin/main gives a preview.'
+    required: false
+    default: ''
+  override:
+    description: 'A path pattern such as release-notes/{version}.md ({version} without its v). When that file exists it is published word for word.'
+    required: false
+    default: ''
+  footer:
+    description: 'A file appended after the generated notes (not after an override).'
+    required: false
+    default: ''
+  scope-sections:
+    description: 'One scope=heading per line, e.g. "cli=⌨️ In Terminal". Pull requests with a listed scope get their own section; any other scope is only a label.'
+    required: false
+    default: ''
+  output:
+    description: 'Where to write the notes.'
+    required: false
+    default: 'release-notes.md'
+
+outputs:
+  path:
+    description: 'The path of the notes file.'
+    value: ${{ steps.notes.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - id: notes
+      shell: bash
+      env:
+        GH_TOKEN: ${{ env.GH_TOKEN || github.token }}
+        GH_REPO: ${{ github.repository }}
+        VERSION: ${{ inputs.version }}
+        REF: ${{ inputs.ref }}
+        OVERRIDE: ${{ inputs.override }}
+        FOOTER: ${{ inputs.footer }}
+        SCOPE_SECTIONS: ${{ inputs.scope-sections }}
+        OUTPUT: ${{ inputs.output }}
+      run: |
+        args=("$VERSION")
+        [[ -n "$REF" ]] && args+=("$REF")
+        [[ -n "$OVERRIDE" ]] && args+=(--override "$OVERRIDE")
+        [[ -n "$FOOTER" ]] && args+=(--footer "$FOOTER")
+        while IFS= read -r line; do
+          if [[ -n "$line" ]]; then args+=(--scope-section "$line"); fi
+        done <<< "$SCOPE_SECTIONS"
+        python3 "$GITHUB_ACTION_PATH/release_notes.py" "${args[@]}" > "$OUTPUT"
+        echo "path=$OUTPUT" >> "$GITHUB_OUTPUT"

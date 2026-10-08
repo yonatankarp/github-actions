@@ -12,7 +12,8 @@ Triggered on `pull_request` (`opened`, `synchronize`, `reopened`, `ready_for_rev
 | `dependabot_auto_merge` | Calls [`dependabot-auto-merge.yml`](./dependabot-auto-merge.md) when the PR author is `dependabot[bot]`.          |
 | `linters`            | Calls [`linters.yml`](./linters.md).                                                                                 |
 | `actions-linter`     | Runs `devops-actions/actionlint` against the workflow YAMLs.                                                         |
-| `all-green`          | Aggregates `pipeline`, `linters`, `actions-linter` into a single required check via `re-actors/alls-green`.          |
+| `release-notes-test` | Runs the [`release-notes`](../actions/release-notes) script's unit tests (`python3 -m unittest`).                     |
+| `all-green`          | Aggregates `pipeline`, `linters`, `actions-linter`, `release-notes-test` into a single required check via `re-actors/alls-green`. |
 
 ## Matrix variants tested by `pipeline`
 

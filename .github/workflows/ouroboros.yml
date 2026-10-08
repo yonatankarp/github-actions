@@ -66,11 +66,19 @@ jobs:
 
       - uses: devops-actions/actionlint@v0.1.13
 
+  release-notes-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - run: python3 -m unittest discover -s .github/actions/release-notes
+
   all-green:
     needs:
       - pipeline
       - linters
       - actions-linter
+      - release-notes-test
     if: always()
     runs-on: ubuntu-latest
     steps:

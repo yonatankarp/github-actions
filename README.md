@@ -13,6 +13,13 @@ Shared place for GitHub composable actions and workflows
 - [linters](.github/workflows/linters.yml) - Runs the configured linters on the project
 - [dependabot-auto-merge](.github/workflows/dependabot-auto-merge.yml) - Runs a pipeline that allows dependabot to automatically merge PRs that opened by it.
 - [update-gradle-wrapper](.github/workflows/update-gradle-wrapper.yml) - A pipeline that allows upgrading gradle wrapper to its latest version. The pipeline can be executed nightly using GitHub action chron jobs.
+- [pr-title](.github/workflows/pr-title.yml) - Checks that a pull request
+  title starts with its kind (`feat:`, `fix(scope):`, …)
+
+## Available actions
+
+- [release-notes](.github/actions/release-notes) - Writes a
+  version's release notes from the pull requests merged since the last tag
 
 ---
 
