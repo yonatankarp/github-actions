@@ -1,0 +1,28 @@
+name: Pull request title
+
+on:
+  workflow_call:
+    inputs:
+      kinds:
+        type: string
+        required: false
+        description: Comma-separated kinds a title may start with.
+        default: 'feat,change,fix,docs,chore,ci,test,refactor'
+
+permissions: {}
+
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          KINDS: ${{ inputs.kinds }}
+        run: |
+          kinds="${KINDS//[[:space:]]/}"
+          pattern="^(${kinds//,/|})(\([^)]*\))?!?: .+"
+          if [[ ! "$TITLE" =~ $pattern ]]; then
+            echo "::error title=Pull request title::Start the title with its kind, e.g. 'feat: …' or 'fix(scope): …'. Kinds: ${kinds//,/, }."
+            exit 1
+          fi
