@@ -21,6 +21,14 @@ inputs:
     description: 'One scope=heading per line, e.g. "cli=⌨️ In Terminal". Pull requests with a listed scope get their own section; any other scope is only a label.'
     required: false
     default: ''
+  dependencies:
+    description: 'A heading for dependency upgrades (chore(deps) pull requests), e.g. "📦 Dependencies". Empty leaves them out.'
+    required: false
+    default: ''
+  dependencies-ignore:
+    description: 'One text per line; a dependency upgrade whose title contains one (any case) is left out, e.g. build-only tools.'
+    required: false
+    default: ''
   output:
     description: 'Where to write the notes.'
     required: false
@@ -44,14 +52,20 @@ runs:
         OVERRIDE: ${{ inputs.override }}
         FOOTER: ${{ inputs.footer }}
         SCOPE_SECTIONS: ${{ inputs.scope-sections }}
+        DEPENDENCIES: ${{ inputs.dependencies }}
+        DEPENDENCIES_IGNORE: ${{ inputs.dependencies-ignore }}
         OUTPUT: ${{ inputs.output }}
       run: |
         args=("$VERSION")
         [[ -n "$REF" ]] && args+=("$REF")
         [[ -n "$OVERRIDE" ]] && args+=(--override "$OVERRIDE")
         [[ -n "$FOOTER" ]] && args+=(--footer "$FOOTER")
+        [[ -n "$DEPENDENCIES" ]] && args+=(--dependencies "$DEPENDENCIES")
         while IFS= read -r line; do
           if [[ -n "$line" ]]; then args+=(--scope-section "$line"); fi
         done <<< "$SCOPE_SECTIONS"
+        while IFS= read -r line; do
+          if [[ -n "$line" ]]; then args+=(--dependencies-ignore "$line"); fi
+        done <<< "$DEPENDENCIES_IGNORE"
         python3 "$GITHUB_ACTION_PATH/release_notes.py" "${args[@]}" > "$OUTPUT"
         echo "path=$OUTPUT" >> "$GITHUB_OUTPUT"

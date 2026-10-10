@@ -5,11 +5,12 @@ Composite action that writes a version's release notes from the pull requests me
 What goes in:
 
 - **The title's kind picks the heading:** `feat:` under **✨ New features**, `change:` under **🔧 Improvements**, `fix:` under **🐞 Bug fixes**. `docs`, `chore`, `ci`, `test` and `refactor` are left out.
+- **Dependency upgrades** (`chore(deps): …`, Dependabot's default) get a section of their own, last, when `dependencies` names its heading. Libraries usually want this, since their users inherit those versions. Without it they're left out like any chore. `dependencies-ignore` drops build-only upgrades by a text in their title, such as a Dependabot group of build tools.
 - **A scope is only a label** (`feat(Sessions): …` stays under New features), unless it's listed in `scope-sections`, which gives it a heading of its own (`cli=⌨️ In Terminal` puts `fix(cli): …` there).
 - **The entry** is the first paragraph under a `## Release note` heading in the pull request's description, or the title when there is none. `none` leaves the pull request out. A paragraph becomes one bullet; a list stays a list.
 - **Links and HTML are taken out**, since anyone can edit a description: a link keeps its text, tags and comments go, and a bare URL loses its `https://` so nothing autolinks.
-- **A count line goes on top:** "This update has 7 improvements and 1 bug fix." A scope section adds ", plus more in Terminal." (its heading, without the emoji, after "more").
-- **It fails** when the version has no `feat`, `fix` or `change` pull request, so an empty release never goes out.
+- **A count line goes on top:** "This update has 7 improvements and 1 bug fix." Dependency upgrades count as "dependency updates". A scope section adds ", plus more in Terminal." (its heading, without the emoji, after "more").
+- **It fails** when the version has no `feat`, `fix` or `change` pull request (or dependency upgrade, with `dependencies` set), so an empty release never goes out.
 
 The pull requests are found on the first-parent history between the two tags: merge commits (`Merge pull request #12 from …`) and squash merges (`Title (#12)`) both work. A commit with neither is left out with a warning.
 
@@ -24,6 +25,8 @@ The descriptions are read when the action runs, not when the pull requests were 
 | `override`       | no       | `''`               | A path pattern such as `release-notes/{version}.md` (`{version}` without its `v`). When that file exists, it's published word for word instead. |
 | `footer`         | no       | `''`               | A file appended after the generated notes, such as install instructions. Not appended to an override file.          |
 | `scope-sections` | no       | `''`               | One `scope=heading` per line, e.g. `cli=⌨️ In Terminal`. Only listed scopes get their own section.                  |
+| `dependencies`   | no       | `''`               | A heading for dependency upgrades (`chore(deps)` pull requests), e.g. `📦 Dependencies`. Empty leaves them out.      |
+| `dependencies-ignore` | no  | `''`               | One text per line. A dependency upgrade whose title contains one (any case) is left out, e.g. `gradle-wrapper` or a Dependabot group of build tools. |
 | `output`         | no       | `release-notes.md` | Where to write the notes.                                                                                           |
 
 ## Outputs
@@ -85,7 +88,7 @@ python3 path/to/github-actions/.github/actions/release-notes/release_notes.py 0.
   --override 'release-notes/{version}.md' --scope-section 'cli=⌨️ In Terminal'
 ```
 
-Without a `ref` it ends at the `v0.8.0` tag. `--footer FILE` works as the input does.
+Without a `ref` it ends at the `v0.8.0` tag. `--footer FILE`, `--dependencies HEADING` and `--dependencies-ignore TEXT` work as the inputs do.
 
 ## Notes
 
