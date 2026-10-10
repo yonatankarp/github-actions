@@ -21,6 +21,10 @@ inputs:
     description: 'One scope=heading per line, e.g. "cli=⌨️ In Terminal". Pull requests with a listed scope get their own section; any other scope is only a label.'
     required: false
     default: ''
+  dependencies:
+    description: 'A heading for dependency upgrades (chore(deps) pull requests), e.g. "📦 Dependencies". Empty leaves them out.'
+    required: false
+    default: ''
   output:
     description: 'Where to write the notes.'
     required: false
@@ -44,12 +48,14 @@ runs:
         OVERRIDE: ${{ inputs.override }}
         FOOTER: ${{ inputs.footer }}
         SCOPE_SECTIONS: ${{ inputs.scope-sections }}
+        DEPENDENCIES: ${{ inputs.dependencies }}
         OUTPUT: ${{ inputs.output }}
       run: |
         args=("$VERSION")
         [[ -n "$REF" ]] && args+=("$REF")
         [[ -n "$OVERRIDE" ]] && args+=(--override "$OVERRIDE")
         [[ -n "$FOOTER" ]] && args+=(--footer "$FOOTER")
+        [[ -n "$DEPENDENCIES" ]] && args+=(--dependencies "$DEPENDENCIES")
         while IFS= read -r line; do
           if [[ -n "$line" ]]; then args+=(--scope-section "$line"); fi
         done <<< "$SCOPE_SECTIONS"

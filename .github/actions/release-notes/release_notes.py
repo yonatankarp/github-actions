@@ -10,6 +10,8 @@ Options:
     --footer FILE        a file appended after the generated notes
     --scope-section S=H  pull requests with scope S (`feat(S): ...`) go under their own heading H,
                          e.g. 'cli=⌨️ In Terminal'. Repeat it for more than one.
+    --dependencies H     list dependency upgrades (`chore(deps): ...`) under heading H,
+                         e.g. '📦 Dependencies'. Without it they're left out like other chores.
 
 Each pull request's title says what kind of change it is, which picks its heading: `feat: ...` is a
 new feature, `change: ...` an improvement and `fix: ...` a bug fix. Other kinds (docs, chore, ci,
@@ -32,7 +34,7 @@ HEADINGS = {"feat": "✨ New features", "change": "🔧 Improvements", "fix": "�
 KINDS = set(HEADINGS) | {"docs", "chore", "ci", "test", "refactor"}
 TITLE = re.compile(r"^(?P<kind>[a-z]+)(\((?P<scope>[^)]*)\))?!?: (?P<text>.+)$")
 COUNTED = {"feat": ("new feature", "new features"), "change": ("improvement", "improvements"),
-           "fix": ("bug fix", "bug fixes")}
+           "fix": ("bug fix", "bug fixes"), "deps": ("dependency update", "dependency updates")}
 
 
 def run(*args, failed=None):
@@ -92,10 +94,13 @@ def pull_requests(since, ref):
     return numbers
 
 
-def render(prs, scope_sections):
+def render(prs, scope_sections, dependencies=None):
     """The notes for pull requests given as (number, title, body), or "" when none is for people.
-    `scope_sections` maps a scope to its own heading, e.g. {"cli": "⌨️ In Terminal"}."""
+    `scope_sections` maps a scope to its own heading, e.g. {"cli": "⌨️ In Terminal"}. `dependencies`
+    is the heading for `chore(deps)` pull requests, which are left out without it."""
     sections = {heading: [] for heading in [*HEADINGS.values(), *scope_sections.values()]}
+    if dependencies:
+        sections[dependencies] = []
     counts = dict.fromkeys(COUNTED, 0)
     elsewhere = dict.fromkeys(scope_sections.values(), 0)
     for number, pr_title, body in prs:
@@ -104,7 +109,8 @@ def render(prs, scope_sections):
             print(f"#{number} has no kind in its title, left out: {pr_title}", file=sys.stderr)
             continue
         note = release_note(body)
-        if title["kind"] not in HEADINGS or (note or "").lower().rstrip(".") == "none":
+        is_dependency = bool(dependencies) and title["kind"] == "chore" and title["scope"] == "deps"
+        if (title["kind"] not in HEADINGS and not is_dependency) or (note or "").lower().rstrip(".") == "none":
             continue
         if not note:
             text = plain(title["text"])
@@ -113,7 +119,10 @@ def render(prs, scope_sections):
             print(f"#{number} has nothing left in its title once the HTML is taken out, left out", file=sys.stderr)
             continue
         lines = bullets(note)
-        if heading := scope_sections.get(title["scope"]):
+        if is_dependency:
+            heading = dependencies
+            counts["deps"] += len(lines)
+        elif heading := scope_sections.get(title["scope"]):
             elsewhere[heading] += len(lines)
         else:
             heading = HEADINGS[title["kind"]]
@@ -141,7 +150,7 @@ def and_list(items):
     return ", ".join(items[:-1]) + " and " + items[-1] if len(items) > 1 else "".join(items)
 
 
-def notes(version, ref, override=None, footer=None, scope_sections=None):
+def notes(version, ref, override=None, footer=None, scope_sections=None, dependencies=None):
     if override:
         try:
             return open(override.replace("{version}", version)).read().strip()
@@ -154,9 +163,10 @@ def notes(version, ref, override=None, footer=None, scope_sections=None):
         pr = json.loads(run("gh", "pr", "view", number, "--json", "title,body",
                             failed=f"Couldn't read pull request #{number}"))
         prs.append((number, pr["title"], pr["body"]))
-    text = render(prs, scope_sections or {})
+    text = render(prs, scope_sections or {}, dependencies)
     if not text:
-        sys.exit(f"Nothing user-facing in {version}: no feat, fix or change pull request.")
+        sys.exit(f"Nothing user-facing in {version}: no feat, fix or change pull request"
+                 + (" and no dependency update." if dependencies else "."))
     return text + ("\n\n" + open(footer).read().strip() if footer else "")
 
 
@@ -167,9 +177,10 @@ if __name__ == "__main__":
     parser.add_argument("--override")
     parser.add_argument("--footer")
     parser.add_argument("--scope-section", action="append", default=[], metavar="SCOPE=HEADING")
+    parser.add_argument("--dependencies", metavar="HEADING")
     args = parser.parse_args()
     if bad := [s for s in args.scope_section if "=" not in s]:
         parser.error(f"--scope-section {bad[0]!r} isn't scope=heading")
     version = args.version.removeprefix("v")
     print(notes(version, args.ref or f"v{version}", args.override, args.footer,
-                dict(s.split("=", 1) for s in args.scope_section)))
+                dict(s.split("=", 1) for s in args.scope_section), args.dependencies))

@@ -54,6 +54,36 @@ class Render(unittest.TestCase):
         self.assertEqual(render([("1", "chore: tidy", "")], TERMINAL), "")
 
 
+class Dependencies(unittest.TestCase):
+    DEPS = "📦 Dependencies"
+
+    def test_listed_last_and_counted(self):
+        prs = [("1", "chore(deps): bump kotlin from 2.3 to 2.4", ""),
+               ("2", "feat: map zoom", ""),
+               ("3", "fix(cli): a flag", ""),
+               ("4", "chore(deps): bump ktor from 3.5 to 3.6", "")]
+        self.assertEqual(render(prs, TERMINAL, self.DEPS), "\n".join([
+            "This update has 1 new feature and 2 dependency updates, plus more in Terminal.",
+            "",
+            "### ✨ New features", "- Map zoom",
+            "",
+            "### ⌨️ In Terminal", "- A flag",
+            "",
+            "### 📦 Dependencies", "- Bump kotlin from 2.3 to 2.4", "- Bump ktor from 3.5 to 3.6"]))
+
+    def test_left_out_without_a_heading(self):
+        self.assertEqual(render([("1", "chore(deps): bump kotlin from 2.3 to 2.4", "")], {}), "")
+
+    def test_only_dependencies(self):
+        self.assertEqual(render([("1", "chore(deps): bump kotlin from 2.3 to 2.4", "")], {}, self.DEPS),
+                         "This update has 1 dependency update.\n\n### 📦 Dependencies\n- Bump kotlin from 2.3 to 2.4")
+
+    def test_other_chores_and_none_stay_out(self):
+        prs = [("1", "chore: tidy", ""), ("2", "chore(deps): bump ci tool", "## Release note\nnone"),
+               ("3", "ci(deps): bump actions/checkout from 6 to 7", "")]
+        self.assertEqual(render(prs, {}, self.DEPS), "")
+
+
 class Summary(unittest.TestCase):
     def test_count_line(self):
         self.assertEqual(summary({"feat": 0, "change": 7, "fix": 1}), "This update has 7 improvements and 1 bug fix.")
