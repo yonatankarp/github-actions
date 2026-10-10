@@ -12,6 +12,8 @@ Options:
                          e.g. 'cli=⌨️ In Terminal'. Repeat it for more than one.
     --dependencies H     list dependency upgrades (`chore(deps): ...`) under heading H,
                          e.g. '📦 Dependencies'. Without it they're left out like other chores.
+    --dependencies-ignore T  leave out dependency upgrades whose title contains T (any case), e.g.
+                         'gradle-wrapper' for build-only tools. Repeat it for more than one.
 
 Each pull request's title says what kind of change it is, which picks its heading: `feat: ...` is a
 new feature, `change: ...` an improvement and `fix: ...` a bug fix. Other kinds (docs, chore, ci,
@@ -94,10 +96,11 @@ def pull_requests(since, ref):
     return numbers
 
 
-def render(prs, scope_sections, dependencies=None):
+def render(prs, scope_sections, dependencies=None, dependencies_ignore=()):
     """The notes for pull requests given as (number, title, body), or "" when none is for people.
     `scope_sections` maps a scope to its own heading, e.g. {"cli": "⌨️ In Terminal"}. `dependencies`
-    is the heading for `chore(deps)` pull requests, which are left out without it."""
+    is the heading for `chore(deps)` pull requests, which are left out without it, and so is one
+    whose title contains any of `dependencies_ignore`."""
     sections = {heading: [] for heading in [*HEADINGS.values(), *scope_sections.values()]}
     if dependencies:
         sections[dependencies] = []
@@ -110,6 +113,8 @@ def render(prs, scope_sections, dependencies=None):
             continue
         note = release_note(body)
         is_dependency = bool(dependencies) and title["kind"] == "chore" and title["scope"] == "deps"
+        if is_dependency and any(word.lower() in pr_title.lower() for word in dependencies_ignore):
+            continue
         if (title["kind"] not in HEADINGS and not is_dependency) or (note or "").lower().rstrip(".") == "none":
             continue
         if not note:
@@ -150,7 +155,8 @@ def and_list(items):
     return ", ".join(items[:-1]) + " and " + items[-1] if len(items) > 1 else "".join(items)
 
 
-def notes(version, ref, override=None, footer=None, scope_sections=None, dependencies=None):
+def notes(version, ref, override=None, footer=None, scope_sections=None, dependencies=None,
+          dependencies_ignore=()):
     if override:
         try:
             return open(override.replace("{version}", version)).read().strip()
@@ -163,7 +169,7 @@ def notes(version, ref, override=None, footer=None, scope_sections=None, depende
         pr = json.loads(run("gh", "pr", "view", number, "--json", "title,body",
                             failed=f"Couldn't read pull request #{number}"))
         prs.append((number, pr["title"], pr["body"]))
-    text = render(prs, scope_sections or {}, dependencies)
+    text = render(prs, scope_sections or {}, dependencies, dependencies_ignore)
     if not text:
         sys.exit(f"Nothing user-facing in {version}: no feat, fix or change pull request"
                  + (" and no dependency update." if dependencies else "."))
@@ -178,9 +184,10 @@ if __name__ == "__main__":
     parser.add_argument("--footer")
     parser.add_argument("--scope-section", action="append", default=[], metavar="SCOPE=HEADING")
     parser.add_argument("--dependencies", metavar="HEADING")
+    parser.add_argument("--dependencies-ignore", action="append", default=[], metavar="TEXT")
     args = parser.parse_args()
     if bad := [s for s in args.scope_section if "=" not in s]:
         parser.error(f"--scope-section {bad[0]!r} isn't scope=heading")
     version = args.version.removeprefix("v")
     print(notes(version, args.ref or f"v{version}", args.override, args.footer,
-                dict(s.split("=", 1) for s in args.scope_section), args.dependencies))
+                dict(s.split("=", 1) for s in args.scope_section), args.dependencies, args.dependencies_ignore))

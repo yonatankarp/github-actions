@@ -78,6 +78,13 @@ class Dependencies(unittest.TestCase):
         self.assertEqual(render([("1", "chore(deps): bump kotlin from 2.3 to 2.4", "")], {}, self.DEPS),
                          "This update has 1 dependency update.\n\n### 📦 Dependencies\n- Bump kotlin from 2.3 to 2.4")
 
+    def test_ignored_titles_stay_out(self):
+        prs = [("1", "chore(deps): bump the build-and-test group with 3 updates", ""),
+               ("2", "chore(deps): bump Gradle-Wrapper from 9.5 to 9.8", ""),
+               ("3", "chore(deps): bump kotlin from 2.3 to 2.4", "")]
+        self.assertEqual(render(prs, {}, self.DEPS, ["build-and-test", "gradle-wrapper"]),
+                         "This update has 1 dependency update.\n\n### 📦 Dependencies\n- Bump kotlin from 2.3 to 2.4")
+
     def test_other_chores_and_none_stay_out(self):
         prs = [("1", "chore: tidy", ""), ("2", "chore(deps): bump ci tool", "## Release note\nnone"),
                ("3", "ci(deps): bump actions/checkout from 6 to 7", "")]
