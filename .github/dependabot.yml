@@ -10,7 +10,10 @@ registries:
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: "/"
+    # "/" alone covers .github/workflows and a root action.yml, not the composites
+    directories:
+      - "/"
+      - "/.github/actions/*"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 20

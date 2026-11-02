@@ -20,14 +20,14 @@ runs:
   steps:
     - name: Publish unit test results
       if: always()
-      uses: EnricoMi/publish-unit-test-result-action@v2
+      uses: EnricoMi/publish-unit-test-result-action@7622c5bf3d112a72ab4fa3951c2aa5723d8ab92d # v2.25.0
       with:
         junit_files: ${{ inputs.junit-pattern }}
         check_name: ${{ inputs.check-name }}
 
     - name: Upload test and coverage reports
       if: always()
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: ${{ inputs.artifact-name }}
         path: |
